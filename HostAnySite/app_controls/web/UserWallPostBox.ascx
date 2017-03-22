@@ -1,22 +1,12 @@
 ﻿<%@ Control Language="VB" ClassName="UserWallPostBox" %>
 
 <script runat="server">
-
     Public Property Wall_UserId() As String
         Get
             Return LabelWall_UserId.Text
         End Get
         Set(ByVal value As String)
             LabelWall_UserId.Text = value
-        End Set
-    End Property
-
-    Public Property HeadingEndPart() As String
-        Get
-            Return LabelHeadingEndPart.Text
-        End Get
-        Set(ByVal value As String)
-            LabelHeadingEndPart.Text = value
         End Set
     End Property
 
@@ -59,29 +49,22 @@
                 Exit Sub
             Else
                 ' success
-                '   Labelimageid.Text = Wallid
-                heading = "<a href='http://" & Request.Url.Host & "/user/" & Session("routusername") & "'>" & Session("username") & "</a> posted image"
-
+                heading = "posted image"
             End If
         Else
             WallImageid = 0
-            heading = "<a href='http://" & Request.Url.Host & "/user/" & Session("routusername") & "'>" & Session("username") & "</a> posted"
+            heading = "posted"
         End If
         ''''''''''''''''''''''
         'up load image
-
-        If Trim(HeadingEndPart) <> "" Then
-            heading = heading + " " + HeadingEndPart
-        End If
 
         Dim submituserwall As ClassHostAnySite.UserWall.StructureUserWall
 
         If WallImageid = 0 Then
             submituserwall = ClassHostAnySite.UserWall.UserWall_Add(heading, TextBoxStatus.Text, WallImageid, Session("userId"), MyWall_UserId, "0", "0", "active", ClassAppDetails.DBCS)
         Else
-            submituserwall = ClassHostAnySite.UserWall.UserWall_Add(heading, TextBoxStatus.Text, WallImageid, Session("userId"), MyWall_UserId, "0", "0", "active", ClassAppDetails.DBCS, ClassHostAnySite.UserWall.PreviewTypeEnum.ImageView, "", "", "")
+            submituserwall = ClassHostAnySite.UserWall.UserWall_Add(heading, TextBoxStatus.Text, WallImageid, Session("userId"), MyWall_UserId, "0", WallImageid, "active", ClassAppDetails.DBCS)
         End If
-
 
         If submituserwall.Result = False Then
             LabelStatusEm.Text = "Failed to submit post."
@@ -91,14 +74,12 @@
 
             Response.Redirect(Request.Url.ToString)
         End If
-
     End Sub
 </script>
 <div class="panel panel-default">
     <div class="panel-heading ">
         Update Status
           <asp:Label ID="LabelWall_UserId" runat="server" Text="22" Visible="False"></asp:Label>
-        <asp:Label ID="LabelHeadingEndPart" runat="server" Text="" Visible="False"></asp:Label>
     </div>
     <div class="panel-body">
         <div class="form-group">

@@ -43,6 +43,8 @@
 
     Protected Sub DropDownListSetting_SelectedIndexChanged(sender As Object, e As EventArgs)
         If DropDownListSetting.SelectedIndex = 0 Then
+            contentimage.ImageUrl = ""
+            contentimage.Visible = False
             Exit Sub
         End If
 
@@ -77,6 +79,9 @@
 
 
     Protected Sub ButtonSubmit_Click(sender As Object, e As EventArgs)
+        If DropDownListSetting.SelectedIndex = 0 Then
+            Exit Sub
+        End If
         If FileUpload1.HasFile = True Then
             Dim fileExt As String
             fileExt = System.IO.Path.GetExtension(FileUpload1.FileName)

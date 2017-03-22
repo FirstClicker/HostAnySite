@@ -11,82 +11,106 @@
         LabelCopyRight.Text = ClassAppDetails.CopyRight
 
 
-
-        If Not (IsPostBack)Then
+        If Not (IsPostBack) Then
             CurrentThemeLink.Attributes.Add("href", ClassAppDetails.CurrentTheme)
+
+            If Trim(Session("UserName")) <> "" Then ' user signed in
+                LabelUser.Text = Session("UserName")
+                liSignIn.Visible = False
+                liSignUp.Visible = False
+
+                liProfile.Visible = True
+                HyperLinkProfile.NavigateUrl = "~/user/" & Trim(Session("RoutUserName"))
+
+                liDashboard.Visible = True
+
+                Dim Cusertype As New ClassHostAnySite.User.UserType
+                Try
+                    Cusertype = [Enum].Parse(GetType(ClassHostAnySite.User.UserType), Trim(Session("UserType")), True)
+                Catch ex As Exception
+                End Try
+                If Cusertype = ClassHostAnySite.User.UserType.Administrator Or Cusertype = ClassHostAnySite.User.UserType.Moderator Then
+                    liAdminPanel.Visible = True
+                Else
+                    liAdminPanel.Visible = False
+                End If
+
+                liSignout.Visible = True
+
+                MessageNotification.Visible = True
+                UserNotification.Visible = True
+                HyperLinkmessagenotification0.NavigateUrl = "~/dashboard/Message/"
+            Else
+                LabelUser.Text = "Guest"
+
+                liProfile.Visible = False
+                liDashboard.Visible = False
+                liAdminPanel.Visible = False
+                liSignout.Visible = False
+
+                liSignIn.Visible = True
+                liSignUp.Visible = True
+
+                MessageNotification.Visible = False
+                UserNotification.Visible = False
+            End If
+
+            If MessageNotification.Visible = True Then
+                Dim myConn As SqlConnection
+                Dim myCmd As SqlCommand
+                Dim myReader As SqlDataReader
+
+                myConn = New SqlConnection(ClassAppDetails.DBCS)
+                myCmd = myConn.CreateCommand
+                myConn.Open()
+
+
+                myCmd.CommandText = "SELECT  COUNT(*) OVER () AS mymsgnum, count(*) RecordsPerGroup, TU0.[UserId], TU0.[UserName], TU0.[RoutUserName], TU0.imageid, max(postdate) as postdate"
+                myCmd.CommandText = myCmd.CommandText & " FROM Table_userChatMessage TUCM"
+                myCmd.CommandText = myCmd.CommandText & " left JOIN Table_User TU0 on TU0.userid = TUCM.userid"
+                myCmd.CommandText = myCmd.CommandText & " left JOIN Table_UserChat TUC on TUCM.ChatId = TUC.ChatId"
+                myCmd.CommandText = myCmd.CommandText & " left JOIN Table_User TU1 on TU1.userid = TUC.First_userid"
+                myCmd.CommandText = myCmd.CommandText & " left JOIN Table_User TU2 on TU2.userid = TUC.second_userid"
+                myCmd.CommandText = myCmd.CommandText & " where ((TU1.userid ='" & Session("userid") & "') or (TU2.userid ='" & Session("userid") & "')) and (TUCM.isread='false') and TUCM.userid<>'" & Session("userid") & "'"
+                myCmd.CommandText = myCmd.CommandText & " group by TU0.[UserId], TU0.[UserName], TU0.[RoutUserName], TU0.imageid order by max(postdate) desc"
+                myReader = myCmd.ExecuteReader()
+
+                Dim numi As Integer = 1
+                Do While myReader.Read
+                    Select Case numi
+                        Case 1
+                            LabelMessageNum.Text = myReader.Item("mymsgnum")
+
+                            messagenotification1.Visible = True
+                            HyperLinkmessagenotification1.Text = myReader.Item("UserName") & " (" & myReader.Item("RecordsPerGroup").ToString & ")"
+                            HyperLinkmessagenotification1.NavigateUrl = "~/Message/" & myReader.Item("routUserName")
+                        Case 2
+                            messagenotification2.Visible = True
+                            HyperLinkmessagenotification2.Text = myReader.Item("UserName") & " (" & myReader.Item("RecordsPerGroup").ToString & ")"
+                            HyperLinkmessagenotification2.NavigateUrl = "~/Message/" & myReader.Item("routUserName")
+                        Case Else
+                            Exit Do
+                    End Select
+                    numi = numi + 1
+                Loop
+
+                myReader.Close()
+                myConn.Close()
+            End If
         End If
+    End Sub
 
-
-        If Trim(Session("UserName")) <> "" Then ' user signed in
-            LabelUser.Text = Session("UserName")
-            LabelUser.NavigateUrl = "~/user/" & Session("RoutUserName")
-
-            HyperLinkSignin.Text = "Dashboard"
-            HyperLinkSignin.NavigateUrl = "~/Dashboard/"
-
-            HyperLinkSignUp.Text = "Sign Out"
-            HyperLinkSignUp.NavigateUrl = "~/User/SignOut.aspx"
-
-            messagenotification.Visible = True
-            HyperLinkmessagenotification0.NavigateUrl = "~/dashboard/Message/"
-        Else
-            LabelUser.Text = "Guest"
-            LabelUser.NavigateUrl = ""
-
-            HyperLinkSignin.Text = "Sign In"
-            HyperLinkSignin.NavigateUrl = "~/User/SignIn.aspx"
-
-            HyperLinkSignUp.Text = "Create Account"
-            HyperLinkSignUp.NavigateUrl = "~/User/Signup.aspx"
-
-            MessageNotification.Visible = False
+    Protected Sub SqlDataSourceUserNotification_Selected(sender As Object, e As SqlDataSourceStatusEventArgs)
+        LabelUserNotificationCount.Text = e.AffectedRows
+        If e.AffectedRows <= 10 Then
+            DataPagerUserNotificationcointainer.Visible = False
         End If
+    End Sub
 
-        If MessageNotification.Visible = True Then
-            Dim myConn As SqlConnection
-            Dim myCmd As SqlCommand
-            Dim myReader As SqlDataReader
+    Protected Sub ButtonClearNotification_Click(sender As Object, e As EventArgs)
+        ClassHostAnySite.UserNotification.Notification_ClearAll(Val(Session("UserId")), ClassAppDetails.DBCS)
 
-            myConn = New SqlConnection(ClassAppDetails.DBCS)
-            myCmd = myConn.CreateCommand
-            myConn.Open()
-
-
-            myCmd.CommandText = "SELECT  COUNT(*) OVER () AS mymsgnum, count(*) RecordsPerGroup, TU0.[UserId], TU0.[UserName], TU0.[RoutUserName], TU0.imageid, max(postdate) as postdate"
-            myCmd.CommandText = myCmd.CommandText & " FROM Table_userChatMessage TUCM"
-            myCmd.CommandText = myCmd.CommandText & " left JOIN Table_User TU0 on TU0.userid = TUCM.userid"
-            myCmd.CommandText = myCmd.CommandText & " left JOIN Table_UserChat TUC on TUCM.ChatId = TUC.ChatId"
-            myCmd.CommandText = myCmd.CommandText & " left JOIN Table_User TU1 on TU1.userid = TUC.First_userid"
-            myCmd.CommandText = myCmd.CommandText & " left JOIN Table_User TU2 on TU2.userid = TUC.second_userid"
-            myCmd.CommandText = myCmd.CommandText & " where ((TU1.userid ='" & Session("userid") & "') or (TU2.userid ='" & Session("userid") & "')) and (TUCM.isread='false') and TUCM.userid<>'" & Session("userid") & "'"
-            myCmd.CommandText = myCmd.CommandText & " group by TU0.[UserId], TU0.[UserName], TU0.[RoutUserName], TU0.imageid order by max(postdate) desc"
-            myReader = myCmd.ExecuteReader()
-
-            Dim numi As Integer = 1
-            Do While myReader.Read
-                Select Case numi
-                    Case 1
-                        LabelMessageNum.Text = myReader.Item("mymsgnum")
-
-                        messagenotification1.Visible = True
-                        HyperLinkmessagenotification1.Text = myReader.Item("UserName") & " (" & myReader.Item("RecordsPerGroup").ToString & ")"
-                        HyperLinkmessagenotification1.NavigateUrl = "~/Message/" & myReader.Item("routUserName")
-                    Case 2
-                        messagenotification2.Visible = True
-                        HyperLinkmessagenotification2.Text = myReader.Item("UserName") & " (" & myReader.Item("RecordsPerGroup").ToString & ")"
-                        HyperLinkmessagenotification2.NavigateUrl = "~/Message/" & myReader.Item("routUserName")
-                    Case Else
-                        Exit Do
-                End Select
-                numi = numi + 1
-            Loop
-
-
-            myReader.Close()
-            myConn.Close()
-        End If
-
-
+        ListViewUserNotification.DataBind()
     End Sub
 </script>
 
@@ -138,14 +162,66 @@
                 <!-- Collect the nav links, forms, and other content for toggling -->
                 <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
                     <ul class="nav navbar-nav navbar-right">
-                        <li>
-                            <asp:HyperLink ID="LabelUser" CssClass ="text-capitalize" runat="server" Text="Guest"></asp:HyperLink>
+                       
+                        <li runat="server" id="UserNotification" class="dropdown">
+                            <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
+                                <span class="badge">
+                                    <i class="fa fa-globe fa-lg" aria-hidden="true"></i>&nbsp;&nbsp;<asp:Label ID="LabelUserNotificationCount" runat="server" Text="0" />
+                                </span>
+                            </a>
+                            <ul class="dropdown-menu" style ="width:250px;">
+                                <li class=" list-group-item" style ="margin-top :0px;">
+                                    <asp:Button ID="ButtonClearNotification" CssClass ="btn btn-xs btn-info pull-right" OnClick ="ButtonClearNotification_Click"  runat="server" Text="Clear All" />
+                                    <strong> <span class="text-primary">Notification</span></strong>
+                                </li>
+                                <asp:ListView ID="ListViewUserNotification" runat="server" DataSourceID="SqlDataSourceUserNotification" DataKeyNames="NotificationID">
+                                    <EmptyDataTemplate>
+                                        <li >
+                                            <asp:HyperLink ID="HyperLinkNonotification" CssClass ="small " runat="server">No notification</asp:HyperLink></li>
+                                    </EmptyDataTemplate>
+                                    <ItemTemplate>
+                                        <li class="list-group-item clearfix">
+                                            <div class="media">
+                                                <asp:Panel runat="server" ID="PanelImageCointainer" class="media-left" Visible ='<%# CBool(Eval("UserID")) %>'>
+                                                    <asp:Image runat="server" ID="ImageNotifyUser" Width="30" Height ="40" />
+                                                </asp:Panel>
+                                                <div class="media-body">
+                                                    <h5 class="media-heading">
+                                                        <asp:Label Text='<%# Eval("Notification") %>' runat="server" ID="NotificationLabel" />
+                                                        <small>
+                                                            <asp:Label Text='<%# ClassHostAnySite.HostAnySite.ConvertDateTime4Use(Eval("NotifyDate")) %>' runat="server" ID="NotifyDateLabel" />
+                                                        </small>
+                                                    </h5>
+                                                </div>
+                                            </div>
+                                        </li>
+                                    </ItemTemplate>
+                                    <LayoutTemplate>
+                                            <li runat="server" id="itemPlaceholder" />
+                                    </LayoutTemplate>
+                                </asp:ListView>
+                                <asp:SqlDataSource runat="server" ID="SqlDataSourceUserNotification"  OnSelected ="SqlDataSourceUserNotification_Selected" ConnectionString='<%$ ConnectionStrings:AppConnectionString %>'
+                                    SelectCommand="SELECT * FROM [Table_UserNotification] where (status='UnRead') and (Notify2UserID=@userID) order by [NotifyDate] DESC">
+                                    <SelectParameters>
+                                        <asp:SessionParameter Name="UserID" SessionField="UserID" DefaultValue="0" DbType="Decimal" />
+                                    </SelectParameters>
+                                </asp:SqlDataSource>
+                                <li runat="server" id="DataPagerUserNotificationcointainer" cssclass=" list-group-item clearfix">
+                                    <div class="pull-right ">
+                                        <asp:DataPager runat="server" ID="DataPagerUserNotification" PagedControlID="ListViewUserNotification">
+                                            <Fields>
+                                                <asp:NumericPagerField PreviousPageText="<<" NextPageText=">>" ButtonCount="3" NumericButtonCssClass="btn btn-xs btn-default" CurrentPageLabelCssClass="btn btn-xs btn-default" NextPreviousButtonCssClass="btn btn-xs btn-default" />
+                                            </Fields>
+                                        </asp:DataPager>
+                                    </div>
+                                </li>
+                            </ul>
                         </li>
 
                         <li runat="server" id="MessageNotification" class="dropdown">
                             <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
-                                <span class="glyphicon glyphicon-envelope"></span>
-                                <asp:Label ID="LabelMessageNum" runat="server" Text="0" />
+                                 <span class ="badge" >
+                                <i class="fa fa-envelope-o fa-lg" aria-hidden="true"></i>&nbsp;&nbsp;<asp:Label ID="LabelMessageNum" runat="server" Text="0" /></span> 
                             </a>
                             <ul class="dropdown-menu" role="menu">
                                 <li runat="server" id="messagenotification1" visible="false">
@@ -158,14 +234,27 @@
                         </li>
 
                         <li class="dropdown">
-                            <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
-                                <span class="glyphicon glyphicon-user"><span class="caret"></span></span></a>
-                            <ul class="dropdown-menu" role="menu">
-                                <li>
-                                    <asp:HyperLink ID="HyperLinkSignin" runat="server" NavigateUrl="~/User/SignIn.aspx">Sign In</asp:HyperLink>
+                            <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false"><i class="fa fa-user fa-fw"></i>
+                                &nbsp;<asp:Label ID="LabelUser" CssClass="text-capitalize" runat="server" Text="Guest">&nbsp;</asp:Label><span class="caret" /></a>
+                            <ul runat="server" id="DropdownUserName" class="dropdown-menu">
+                                <li runat="server" id="liProfile">
+                                    <asp:HyperLink ID="HyperLinkProfile" runat="server"><i class="fa fa-user fa-fw"></i>&nbsp;Profile</asp:HyperLink></li>
+                                <li runat="server" id="liDashboard">
+                                    <asp:HyperLink ID="HyperLink1" NavigateUrl="~/Dashboard/" runat="server"><i class="fa fa-dashboard fa-fw"></i>&nbsp;Dashboard</asp:HyperLink>
                                 </li>
-                                <li>
-                                    <asp:HyperLink ID="HyperLinkSignUp" runat="server" NavigateUrl="~/User/SignUp.aspx">Create Account</asp:HyperLink>
+                                <li runat="server" id="liAdminPanel">
+                                    <asp:HyperLink ID="HyperLink12" NavigateUrl="~/AdminPanel/" runat="server"><i class="fa fa-user-secret" aria-hidden="true"></i>&nbsp;AdminPanel</asp:HyperLink>
+                                </li>
+                                <li runat="server" id="liSignIn">
+                                    <asp:HyperLink ID="HyperLink2" NavigateUrl="~/user/signin.aspx" runat="server"><i class="fa  fa-sign-in"></i>&nbsp;Sign In</asp:HyperLink>
+                                </li>
+                                <li class="divider"></li>
+                                <li runat="server" id="liSignout">
+                                    <asp:HyperLink ID="HyperLink3" NavigateUrl="~/user/signout.aspx" runat="server"><i class="fa fa-sign-out"></i>&nbsp;Sign Out</asp:HyperLink>
+                                </li>
+
+                                <li runat="server" id="liSignUp">
+                                    <asp:HyperLink ID="HyperLink4" NavigateUrl="~/user/signup.aspx" runat="server"><i class="fa fa-user-plus"></i>&nbsp;Sign Up</asp:HyperLink>
                                 </li>
                             </ul>
                         </li>

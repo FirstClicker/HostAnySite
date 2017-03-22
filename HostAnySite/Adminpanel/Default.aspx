@@ -26,7 +26,7 @@
         <div class="col-md-3 col-sm-3">
             <uc1:NavigationSideAdmin runat="server" ID="NavigationSideAdmin" />
         </div>
-        <div class="col-md-8 col-sm-8">
+        <div class="col-md-9 col-sm-9">
            <div class="panel panel-default">
                 <div class="panel-heading">Activity</div>
                 <div class="panel-body">

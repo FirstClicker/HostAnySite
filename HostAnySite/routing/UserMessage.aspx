@@ -133,7 +133,8 @@
                                 <asp:ListView ID="ListViewMessage" runat="server" DataSourceID="SqlDataSourceMessage" OnItemDataBound="ListViewMessage_ItemDataBound">
 
                                     <EmptyDataTemplate>
-                                         <div class="list-group-item">No message history.</div>
+                                         <div  class="list-group">
+                                         <div class="list-group-item">No message history.. </div></div> 
                                     </EmptyDataTemplate>
 
                                     <ItemTemplate>

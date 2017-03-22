@@ -15,14 +15,14 @@
             TextBoxUserName.Text = emaildetails.UserName
             TextBoxPassword.Text = emaildetails.Password
             TextBoxEmail.Text = emaildetails.Email
-            
+
             CheckBoxEnabled.Checked = emaildetails.Result
         End If
     End Sub
 
     Protected Sub ButtonTest_Click(sender As Object, e As EventArgs)
         Dim emaildetails As ClassHostAnySite.Email.StructureEmail = ClassHostAnySite.Email.ServiceEmail_Get(ClassAppDetails.DBCS)
-         
+
         Try
             ' mail sendinggggggggggg
             Dim client As New System.Net.Mail.SmtpClient(emaildetails.Host, emaildetails.Port)
@@ -42,15 +42,14 @@
 
             client.Send(msg)
         Catch ex As Exception
-            LabelMsg.Text = ex.Message
+            LabelMsgTest.Text = ex.Message
             Exit Sub
         End Try
         'mail sendinggggggggggg
-     
+
         Dim updatesetting As ClassHostAnySite.WebSetting.StructureWebSetting
         updatesetting = ClassHostAnySite.WebSetting.WebSetting_Update("ServiceEmail_Enabled", "True", ClassAppDetails.DBCS)
-        
-        
+
     End Sub
 
     Protected Sub ButtonSave_Click(sender As Object, e As EventArgs)
@@ -64,7 +63,7 @@
 
     End Sub
 
-    
+
 </script>
 
 <asp:Content ID="Content1" ContentPlaceHolderID="head" runat="Server">
@@ -72,7 +71,7 @@
 <asp:Content ID="Content2" ContentPlaceHolderID="ContentPlaceHolder1" runat="Server">
     <uc1:ValidateAdminUserAccess runat="server" ID="ValidateAdminUserAccess" />
     <div class="row">
-       <div class="col-md-3 col-sm-3">
+        <div class="col-md-3 col-sm-3">
             <uc1:NavigationSideAdmin runat="server" ID="NavigationSideAdmin" />
         </div>
         <div class="col-md-8 col-sm-8">
@@ -81,57 +80,56 @@
                 <div class="panel-body">
                     <div class="form-signin">
                         <div class="form-group">
-                   
-                              
-                                <asp:TextBox ID="TextBoxHost" runat="server" class="form-control" placeholder="Host"></asp:TextBox>
-                        
+                              <label for="inputEmail">Host</label>
+                            <asp:TextBox ID="TextBoxHost" runat="server" class="form-control" placeholder="Host"></asp:TextBox>
                         </div>
                         <div class="form">
-                         
-                                <asp:TextBox ID="TextBoxPort" runat="server" class="form-control" placeholder="Port"></asp:TextBox>
-                       
+                              <label for="inputEmail">Port</label>
+                            <asp:TextBox ID="TextBoxPort" runat="server" class="form-control" placeholder="Port"></asp:TextBox>
                         </div>
-                         <div class="form-group">
-                          
-                                <asp:TextBox ID="TextBoxUserName" runat="server" class="form-control" placeholder="User Name"></asp:TextBox>
-                       
+                        <div class="form-group">
+                              <label for="inputEmail">User Name</label>
+                            <asp:TextBox ID="TextBoxUserName" runat="server" class="form-control" placeholder="User Name"></asp:TextBox>
                         </div>
-                         <div class="form-group">
-                         
-                                <asp:TextBox ID="TextBoxPassword" runat="server" class="form-control" placeholder="Password"></asp:TextBox>
-                    
+                        <div class="form-group">
+                              <label for="inputEmail">Password</label>
+                            <asp:TextBox ID="TextBoxPassword" runat="server" class="form-control" placeholder="Password"></asp:TextBox>
                         </div>
-                         <div class="form-group">
-                          
-                                <asp:TextBox ID="TextBoxEmail" runat="server" class="form-control" placeholder="Email"></asp:TextBox>
-                        
+                        <div class="form-group">
+                              <label for="inputEmail">Email</label>
+                            <asp:TextBox ID="TextBoxEmail" runat="server" class="form-control" placeholder="Email"></asp:TextBox>
+                        </div>
+                        <div class="form-group ">
+                            <div class="checkbox">
+                                <label for="inputEmail">
+                                    <asp:CheckBox ID="CheckBoxEnabled" runat="server"/> Enable Email Service
+                                </label>
+                            </div>
                         </div>
                         <div class="form-group clearfix ">
-                            <div class="pull-left ">
-                                <div class="checkbox">
-                                    <label>
-                                        <asp:CheckBox ID="CheckBoxEnabled" runat="server" />
-                                        Enable</label>
-                                </div>
-                            </div>
                             <div class="pull-right">
-                                <asp:Button ID="ButtonSave" runat="server" class="btn btn-primary" Text="Save" OnClick="ButtonSave_Click"   />
+                                <asp:Button ID="ButtonSave" runat="server" class="btn btn-primary" Text="Save" OnClick="ButtonSave_Click" />
                             </div>
                         </div>
-               
                         <div class="form-group">
                             <asp:Label ID="LabelMsg" runat="server" ForeColor="Maroon"></asp:Label>
                         </div>
 
-                        <div class="form-group clearfix ">
-                            <div class="pull-left ">
-                                 <asp:TextBox ID="TextBoxCheckEmail" runat="server" class="form-control" placeholder="Email"></asp:TextBox>
+                    </div>
+                    <div class="panel panel-default ">
+                        <div class="panel-body ">
+                            <div class="form-group">
+                                <div class="input-group ">
+                                    <asp:TextBox ID="TextBoxCheckEmail" runat="server" class="form-control" placeholder="Email"></asp:TextBox>
+                                    <div class="input-group-btn ">
+                                        <asp:Button ID="ButtonTest" runat="server" class="btn btn-primary" Text="Test Email and Enable service" OnClick="ButtonTest_Click" />
+                                    </div>
+                                </div>
                             </div>
-                            <div class="pull-right">
-                                <asp:Button ID="ButtonTest" runat="server" class="btn btn-primary" Text="Test Email" OnClick="ButtonTest_Click"  />
-                            </div>
+                              <div class="form-group">
+                            <asp:Label ID="LabelMsgTest" runat="server" ForeColor="Maroon"></asp:Label>
                         </div>
-
+                        </div>
                     </div>
                 </div>
             </div>

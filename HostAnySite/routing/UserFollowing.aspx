@@ -43,7 +43,9 @@
 
         LabelUserName.Text = userinfo.UserName
 
-
+        Me.Title = MenuUserProfile.UserName
+        Me.MetaDescription = MenuUserProfile.UserName & "' Following"
+        Me.MetaKeywords = ""
     End Sub
 
 

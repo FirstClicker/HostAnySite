@@ -10,15 +10,13 @@
         Dim createforum As Forum.StructureForum
         createforum = Forum.Create_Forum(TextBoxHeading.Text, TextBoxDrescption.Text, "0", Session("UserID"), Forum.ForumVisibleToEnum.EveryOne, ClassAppDetails.DBCS)
         If createforum.Result = True Then
-            Dim newForumURL As String = "http://" & Request.Url.Host & "/forum/" & createforum.Forum_Id & "/" & ClassHostAnySite.HostAnySite.ConvertSpace2Dass(createforum.Heading)
-
-            'post to userwall
-            Dim submituserwall2 As ClassHostAnySite.UserWall.StructureUserWall
-            submituserwall2 = ClassHostAnySite.UserWall.UserWall_Add(" ", "A new Forum posted", 0, Session("userId"), Session("userid"), 0, 0, "active", ClassAppDetails.DBCS, ClassHostAnySite.UserWall.PreviewTypeEnum.MediaView, TextBoxHeading.Text.Replace("'", "''"), newForumURL.Replace("'", "''"), Mid(TextBoxDrescption.Text, 1, 500).Replace("'", "''"))
-
-
-
-            Response.Redirect("~/forum/" & createforum.Forum_Id & "/" & ClassHostAnySite.HostAnySite.ConvertSpace2Dass(createforum.Heading))
+            Dim newForumURL As String = "~/forum/" & createforum.Forum_Id & "/" & ClassHostAnySite.HostAnySite.ConvertSpace2Dass(createforum.Heading)
+            If CheckBoxPostToMyWall.Checked = True Then
+                'post to userwall
+                Dim submituserwall2 As ClassHostAnySite.UserWall.StructureUserWall
+                submituserwall2 = ClassHostAnySite.UserWall.UserWall_Add(" ", "A new Forum posted", 0, Session("userId"), Session("userid"), 0, 0, "active", ClassAppDetails.DBCS, ClassHostAnySite.UserWall.PreviewTypeEnum.MediaView, TextBoxHeading.Text.Replace("'", "''"), newForumURL.Replace("'", "''"), Mid(TextBoxDrescption.Text, 1, 500).Replace("'", "''"))
+            End If
+            Response.Redirect(newForumURL)
         Else
             LabelEM.Text = createforum.My_Error_message
         End If
@@ -26,11 +24,8 @@
 
     Protected Sub Page_Load(sender As Object, e As EventArgs)
         If IsPostBack = False Then
-
         End If
     End Sub
-
-
 
 </script>
 
@@ -64,7 +59,6 @@
                         </div>
                        
                     </EmptyDataTemplate>
-
                     <ItemTemplate>
                         <tr>
                             <td class="text-left ">
@@ -84,7 +78,7 @@
                             <td class="hidden-xs hidden-sm">
                                 <asp:HyperLink ID="HyperLinkUserName" CssClass=" text-capitalize " runat="server" NavigateUrl='<%# "~/user/" + Eval("RoutUserName")%>'><%# Eval("Username")%></asp:HyperLink><br>
                                 <small class="text-nowrap "><i class="fa fa-clock-o"></i>
-                                    <asp:Label ID="NotificationDateLabel" runat="server" Text='<%# Eval("CreateDate")%>' /></small>
+                                <asp:Label ID="NotificationDateLabel" runat="server" Text='<%# Eval("CreateDate")%>' /></small>
                             </td>
                         </tr>
                     </ItemTemplate>
@@ -105,8 +99,6 @@
                             </table>
                         </div>
                     </LayoutTemplate>
-
-
                 </asp:ListView>
                 <asp:SqlDataSource runat="server" ID="SqlDataSourcePubicForum" ConnectionString='<%$ ConnectionStrings:AppConnectionString %>'
                     SelectCommand="SELECT t.Forum_Id, t.Heading, t.Drescption, t.ForumBoard_Id, t.UserId, t.CreateDate, TU.username, TU.routusername, TUI.ImageFileName, count(DISTINCT TFT.topic_id) as TopicCount, COUNT(DISTINCT TFTR.Id) as TopicReplyCount
@@ -117,7 +109,6 @@
                           left JOIN Table_ForumTopicReply TFTR on TFT.Topic_Id = TFTR.Topic_Id
                           Group By  t.Forum_Id, t.Heading, t.Drescption, t.ForumBoard_Id, t.UserId, t.CreateDate, TU.username, TU.routusername, TUI.ImageFileName
                           ORDER BY t.[CreateDate] DESC"></asp:SqlDataSource>
-
                 <div class="panel-footer clearfix">
                     <div class="pull-right">
                         <asp:DataPager runat="server" ID="DataPagerPublicForom" PagedControlID="ListviewPublicForom">
@@ -137,8 +128,6 @@
                 <div class="panel-heading">Create New Forum</div>
                 <div class="panel-body">
                     <div class="form">
-                       
-
                         <div class="form-group">
                             <label for="TextBoxHeading" class="sr-only">Heading</label>
                             <asp:TextBox ID="TextBoxHeading" runat="server" CssClass="form-control" placeholder="Forum Heading"></asp:TextBox>
@@ -150,7 +139,12 @@
                         <div class="form-group">
                             <asp:Label ID="LabelEM" runat="server" ForeColor="Maroon"></asp:Label>
                         </div>
-                        <asp:Button ID="ButtonPostForum" runat="server" Text="Create Forum" class="btn btn-lg btn-primary btn-block" OnClick="ButtonPostForum_Click" />
+                        <div class="form-group">
+                            <div class="pull-right">
+                                <asp:CheckBox ID="CheckBoxPostToMyWall" CssClass="text-info text-muted" Text="Share on my wall" runat="server" Checked ="true"  />
+                                <asp:Button ID="ButtonPostForum" runat="server" Text="Create Forum" class="btn btn-primary" OnClick="ButtonPostForum_Click" />
+                            </div>
+                        </div> 
                     </div>
                 </div>
             </div>

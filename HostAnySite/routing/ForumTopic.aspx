@@ -1,7 +1,8 @@
 ﻿<%@ Page Title="" Language="VB" MasterPageFile="~/default.master" %>
 
-<%@ Import Namespace="ClassHostAnySite" %>
 <%@ Implements Interface="ClassHostAnySite.RoutForumTopicInterface" %>
+<%@ Register Src="~/app_controls/web/WhatsHappening.ascx" TagPrefix="uc1" TagName="WhatsHappening" %>
+
 
 <script runat="server">
 
@@ -30,25 +31,64 @@
 
     Protected Sub Page_Load(sender As Object, e As EventArgs)
         If IsPostBack = False Then
-            Dim Topicinfo As ForumTopic.StructureTopic = ForumTopic.Get_TopicDetails(RoutFace_RoutTopic_Id, ClassAppDetails.DBCS)
+            Dim Topicinfo As ClassHostAnySite.ForumTopic.StructureTopic = ClassHostAnySite.ForumTopic.Get_TopicDetails(RoutFace_RoutTopic_Id, ClassAppDetails.DBCS)
             LabelTopicid.Text = Topicinfo.Topic_ID
             LabelHeading.Text = Topicinfo.Heading
-            LabelDate.Text = Topicinfo.PostDate
+            LabelDate.Text = ClassHostAnySite.HostAnySite.ConvertDateTime4Use(Topicinfo.PostDate.ToString("yyyy-MM-dd HH:mm:ss"))
             LabelDrescption.Text = Topicinfo.Body
             LabelForumID.Text = Topicinfo.Forum_ID
+            LabelTopicUserID.Text = Topicinfo.UserID
 
-            Dim Foruminfo As Forum.StructureForum = Forum.Get_Forum_ByID(LabelForumID.Text, ClassAppDetails.DBCS)
+            If Topicinfo.Status = ClassHostAnySite.ForumTopic.TopicStatusEnum.Closed Or Topicinfo.Status = ClassHostAnySite.ForumTopic.TopicStatusEnum.ClosedByAdmin Or Topicinfo.Status = ClassHostAnySite.ForumTopic.TopicStatusEnum.SuspendedByAdmin Then
+                PanelPostReply.Enabled = False
+            Else
+
+            End If
+
+
+            Dim Foruminfo As ClassHostAnySite.Forum.StructureForum = ClassHostAnySite.Forum.Get_Forum_ByID(LabelForumID.Text, ClassAppDetails.DBCS)
             HyperLinkForum.Text = Foruminfo.Heading
             HyperLinkForum.NavigateUrl = "~/forum/" & Foruminfo.Forum_Id & "/" & Foruminfo.Heading.Replace(" ", "-")
+            LabelForumUserID.Text = Foruminfo.UserID
 
-            Dim userInfo As User.StructureUser = ClassHostAnySite.User.UserDetail_UserID(Topicinfo.UserID, ClassAppDetails.DBCS)
+
+            Dim userInfo As ClassHostAnySite.User.StructureUser = ClassHostAnySite.User.UserDetail_UserID(Topicinfo.UserID, ClassAppDetails.DBCS)
             HyperLinkUserName.Text = userInfo.UserName
             HyperLinkUserName.NavigateUrl = "~/user/" & userInfo.RoutUserName
             ImageForumTopicUser.ImageUrl = "~/Storage/Image/" & userInfo.UserImage.ImageFileName
         End If
 
-
+        Me.Title = LabelHeading.Text
+        Me.MetaDescription = Mid(LabelDrescption.Text, 1, 250)
+        Me.MetaKeywords = ""
     End Sub
+
+    Protected Sub Page_PreRender(sender As Object, e As EventArgs)
+        If IsPostBack = False Then
+
+            Dim Cusertype As New ClassHostAnySite.User.UserType
+            Try
+                Cusertype = [Enum].Parse(GetType(ClassHostAnySite.User.UserType), Trim(Session("UserType")), True)
+                If Cusertype = ClassHostAnySite.User.UserType.Administrator Or Cusertype = ClassHostAnySite.User.UserType.Moderator Then
+                    LIActionDelete.Visible = True
+                    LIActionStatus.Visible = True
+                End If
+            Catch ex As Exception
+            End Try
+
+            If Val(LabelTopicUserID.Text) > 10 And Val(LabelTopicUserID.Text) = Val(Session("UserID")) Then
+                LIActionDelete.Visible = True
+                LIActionStatus.Visible = True
+            End If
+
+            If Val(LabelForumUserID.Text) > 10 And Val(LabelForumUserID.Text) = Val(Session("UserID")) Then
+                LIActionDelete.Visible = True
+                LIActionStatus.Visible = True
+            End If
+        End If
+    End Sub
+
+
 
     Protected Sub ButtonReply_Click(sender As Object, e As EventArgs)
         If textboxreplyBody.Text = "" Then Exit Sub
@@ -57,45 +97,65 @@
             Exit Sub
         End If
 
-        Dim topicreply As ForumTopicReply.StructureTopicReply = ForumTopicReply.Create_topicReply(textboxreplyBody.Text, Session("userid"), RoutFace_RoutTopic_Id, ForumTopicReply.TopicReplyVisibleToEnum.EveryOne, ClassAppDetails.DBCS)
+        Dim topicreply As ClassHostAnySite.ForumTopicReply.StructureTopicReply = ClassHostAnySite.ForumTopicReply.Create_topicReply(textboxreplyBody.Text, Session("userid"), RoutFace_RoutTopic_Id, ClassHostAnySite.ForumTopicReply.TopicReplyVisibleToEnum.EveryOne, ClassAppDetails.DBCS)
         If topicreply.Result = False Then
             LabelMsg.Text = "Failed to make reply."
         Else
-            ' post to user wall
-
-            Dim submituserwall2 As ClassHostAnySite.UserWall.StructureUserWall
-            submituserwall2 = ClassHostAnySite.UserWall.UserWall_Add(" ", "posted in following topic", 0, Session("userId"), Session("userid"), 0, 0, "active", ClassAppDetails.DBCS, ClassHostAnySite.UserWall.PreviewTypeEnum.MediaView, " ", HttpContext.Current.Request.Url.ToString.Replace("'", "''"), Mid(textboxreplyBody.Text, 1, 500).Replace("'", "''"))
-
-
-
+            If CheckBoxPostToMyWall.Checked = True Then
+                ' post to user wall
+                Dim submituserwall2 As ClassHostAnySite.UserWall.StructureUserWall
+                submituserwall2 = ClassHostAnySite.UserWall.UserWall_Add("replied in following topic", textboxreplyBody.Text.Replace("'", "''"), 0, Session("userId"), Session("userid"), 0, 0, "active", ClassAppDetails.DBCS, ClassHostAnySite.UserWall.PreviewTypeEnum.MediaView, LabelHeading.Text, HttpContext.Current.Request.Url.ToString.Replace("'", "''"), Mid(textboxreplyBody.Text, 1, 500).Replace("'", "''"))
+            End If
 
             textboxreplyBody.Text = ""
-
             ListViewTopicReply.DataBind()
         End If
+    End Sub
+
+    Protected Sub LinkButtonDelete_Click(sender As Object, e As EventArgs)
+
+    End Sub
+
+    Protected Sub LinkButtonStatus_Click(sender As Object, e As EventArgs)
+
     End Sub
 </script>
 
 <asp:Content ID="Content1" ContentPlaceHolderID="head" runat="Server">
 </asp:Content>
 <asp:Content ID="Content2" ContentPlaceHolderID="ContentPlaceHolder1" runat="Server">
-    
-
+    <asp:Label ID="LabelForumUserID" runat="server" Text="" Visible ="false" ></asp:Label>
+    <asp:Label ID="LabelTopicUserID" runat="server" Text="" Visible ="false" ></asp:Label>
     <div class="row">
         <div class="col-lg-8">
-
             <div class="panel panel-default">
                 <div class="panel-heading">
-                    <strong><b>
+                    <div class="dropdown pull-right">
+                        <a href="#" data-toggle="dropdown" class="dropdown-toggle"><i class="fa fa-cog fa-lg"></i></a>
+                        <ul class="dropdown-menu">
+                            <li runat="server" id="LIActionStatus" visible="false">
+                                <asp:LinkButton ID="LinkButtonStatus" OnClick="LinkButtonStatus_Click" runat="server"><small>Change Status</small></asp:LinkButton>
+                            </li>
+                            <li runat="server" id="LIActionDelete" visible="false">
+                                <asp:LinkButton ID="LinkButtonDelete" OnClick="LinkButtonDelete_Click" OnClientClick="return confirm('You can not recover it back!! Are you sure you want to delete? ');" runat="server"><small>Delete</small></asp:LinkButton>
+                            </li>
+                            <li runat="server" id="LIActionReport">
+                                <asp:LinkButton ID="LinkButtonReport" runat="server"><small>Report</small> </asp:LinkButton>
+                            </li>
+                        </ul>
+                    </div>
+                    <h1 class=" panel-title">
                         <asp:HyperLink ID="HyperLink1" runat="server" NavigateUrl="~/Forum/Default.aspx">Forum</asp:HyperLink>
-                        >>
-                        <asp:HyperLink ID="HyperLinkForum" runat="server"></asp:HyperLink></b></strong>
+                        >
+                        <asp:HyperLink ID="HyperLinkForum" runat="server"></asp:HyperLink>
+                    </h1>
+
                     <asp:Label ID="LabelForumID" runat="server" Text="0" Visible="False"></asp:Label>
                 </div>
                 <div class="list-group-item">
                     <div class="media">
                         <a class="pull-left" href="#">
-                            <asp:Image ID="ImageForumTopicUser" runat="server" cssclass="media-object"
+                            <asp:Image ID="ImageForumTopicUser" runat="server" CssClass="media-object"
                                 ImageUrl="~/App_Themes/Default/images/Logo.png" Width="75" Height="100" /><!-- 64x64 -->
                         </a>
                         <div class="media-body">
@@ -103,14 +163,14 @@
                                 <asp:Label ID="LabelHeading" runat="server" Text="" />
                                 <asp:Label ID="LabelTopicid" runat="server" Text="" Visible="False"></asp:Label>
                             </h2>
-                          
+
                             <p>
-                                <asp:HyperLink ID="HyperLinkUserName" runat="server"></asp:HyperLink>
+                                <asp:HyperLink ID="HyperLinkUserName" CssClass ="text-capitalize " runat="server"></asp:HyperLink>
                                 <small>
                                     <asp:Label ID="LabelDate" runat="server" Text="" />
                                 </small>
-                            </p> 
-                               <p>
+                            </p>
+                            <p>
                                 <asp:Label ID="LabelDrescption" runat="server" Text="" />
                             </p>
                         </div>
@@ -118,7 +178,7 @@
                 </div>
             </div>
             <div class="panel panel-default">
-                <div class="panel-heading ">
+                <asp:panel runat ="server" ID="PanelPostReply" cssclass="panel-heading ">
                     <div class="form">
                         <div class="form-group">
                             <label for="textboxreplyBody" class="sr-only">Make reply</label>
@@ -128,25 +188,27 @@
                             <asp:Label ID="LabelMsg" runat="server" ForeColor="Maroon"></asp:Label>
                         </div>
 
-                        <asp:Button ID="ButtonReply" runat="server" cssclass="btn btn-info btn-block" Text="Reply" OnClick="ButtonReply_Click" />
-
+                        <div class="form-group clearfix ">
+                            <div class="pull-right ">
+                                <asp:CheckBox ID="CheckBoxPostToMyWall" CssClass="text-info text-muted" Text="Share on my wall" runat="server" />
+                                <asp:Button ID="ButtonReply" runat="server" CssClass="btn btn-info" Text="Reply" OnClick="ButtonReply_Click" />
+                            </div>
+                        </div> 
                     </div>
 
-                </div>
+                </asp:panel>
                 <div class="panel-body UserWall-Body">
                     <asp:ListView ID="ListViewTopicReply" runat="server" DataSourceID="SqlDataSourceTopicReply" DataKeyNames="Id">
-
-                     
                         <EmptyDataTemplate>
                             <span>No comment yet.</span>
                         </EmptyDataTemplate>
-                   
+
                         <ItemTemplate>
                             <div class="panel panel-default">
                                 <div class="panel-body">
                                     <div class="media">
-                                        <asp:HyperLink ID="userimage" runat="server" cssclass="pull-left" NavigateUrl='<%# "~/user/" + Eval("RoutUserName")%>'>
-                                            <asp:Image runat="server" ID="userimg" cssclass="media-object" ImageUrl='<%# "~/storage/image/" + Eval("imagefilename")%>' Width="60" Height="80" />
+                                        <asp:HyperLink ID="userimage" runat="server" CssClass="pull-left" NavigateUrl='<%# "~/user/" + Eval("RoutUserName")%>'>
+                                            <asp:Image runat="server" ID="userimg" CssClass="media-object" ImageUrl='<%# "~/storage/image/" + Eval("imagefilename")%>' Width="60" Height="80" />
                                         </asp:HyperLink>
                                         <div class="media-body">
                                             <p>
@@ -171,7 +233,7 @@
                             </div>
 
                         </LayoutTemplate>
-                       
+
                     </asp:ListView>
 
                     <asp:SqlDataSource runat="server" ID="SqlDataSourceTopicReply" ConnectionString='<%$ ConnectionStrings:AppConnectionString %>'
@@ -199,6 +261,7 @@
             </div>
         </div>
         <div class="col-md-4">
+            <uc1:WhatsHappening runat="server" ID="WhatsHappening" />
         </div>
     </div>
 </asp:Content>

@@ -1,12 +1,10 @@
 ﻿<%@ Page Title="" Language="VB" MasterPageFile="~/default.master" %>
 
 <%@ Import Namespace="HtmlAgilityPack" %>
-<%@ Register Src="~/app_controls/web/NavigationSideDashboard.ascx" TagPrefix="uc1" TagName="NavigationSideDashboard" %>
 
-<%@ Import Namespace="System.Data.SqlClient" %>
+<%@ Register Src="~/app_controls/web/NavigationSideDashboard.ascx" TagPrefix="uc1" TagName="NavigationSideDashboard" %>
 <%@ Register Assembly="AjaxControlToolkit" Namespace="AjaxControlToolkit" TagPrefix="cc1" %>
 <%@ Register Src="~/app_controls/web/ValidateUserAccess.ascx" TagPrefix="uc1" TagName="ValidateUserAccess" %>
-
 
 <script runat="server">
 
@@ -20,7 +18,7 @@
         htmldoc.LoadHtml(HtmlEditor1.Text)
 
         If Trim(htmldoc.DocumentNode.InnerText) = "" Then
-            LabelEm.Text = "Please edit the blog. Blog body can't be empty."
+            LabelEm.Text = "Blog body can't be empty."
             Exit Sub
         End If
 
@@ -63,23 +61,24 @@
         'up load image
 
 
-
         Dim heighlight As String = Mid(htmldoc.DocumentNode.InnerText, 1, 1000)
 
         Dim submitblog As ClassHostAnySite.Blog.StructureBlog = ClassHostAnySite.Blog.Blog_Add(TextBoxHeading.Text, heighlight, HtmlEditor1.Text, 0, Labelimageid.Text, Session("UserId"), ClassAppDetails.DBCS)
         If submitblog.Result = False Then
             LabelEm.Text = "Failed to submit"
         Else
-            Dim NewBlogURL As String = "http://" & Request.Url.Host & "/blog/" & submitblog.BlogId & "/" & ClassHostAnySite.HostAnySite.ConvertSpace2Dass(submitblog.Heading)
+            Dim NewBlogURL As String = "~/blog/" & submitblog.BlogId & "/" & ClassHostAnySite.HostAnySite.ConvertSpace2Dass(submitblog.Heading)
 
-            'post to user wall
-            Dim submituserwall2 As ClassHostAnySite.UserWall.StructureUserWall
-            submituserwall2 = ClassHostAnySite.UserWall.UserWall_Add(" ", "A new blog posted", Labelimageid.Text, Session("userId"), Session("userid"), 0, 0, "active", ClassAppDetails.DBCS, ClassHostAnySite.UserWall.PreviewTypeEnum.MediaView, TextBoxHeading.Text.Replace("'", "''"), NewBlogURL.Replace("'", "''"), Mid(submitblog.Highlight, 1, 500).Replace("'", "''"))
-
+            If CheckBoxPostToMyWall.Checked = True Then  'post to user wall
+                Dim submituserwall2 As ClassHostAnySite.UserWall.StructureUserWall
+                submituserwall2 = ClassHostAnySite.UserWall.UserWall_Add(" ", "A new blog posted", 0, Session("userId"), Session("userid"), 0, 0, "active", ClassAppDetails.DBCS, ClassHostAnySite.UserWall.PreviewTypeEnum.MediaView, TextBoxHeading.Text.Replace("'", "''"), NewBlogURL.Replace("'", "''"), Mid(submitblog.Highlight, 1, 500).Replace("'", "''"), "~/storage/Image/" & filename)
+            End If
 
             TextBoxHeading.Text = ""
             HtmlEditor1.Text = ""
             LabelEm.Text = "Submitted"
+
+            Response.Redirect(NewBlogURL)
         End If
 
     End Sub
@@ -100,10 +99,10 @@
 <asp:Content ID="Content2" ContentPlaceHolderID="ContentPlaceHolder1" runat="Server">
     <uc1:ValidateUserAccess runat="server" ID="ValidateUserAccess" />
     <div class="row">
-        <div class="col-md-3">
-            <uc1:NavigationSideDashboard runat="server" ID="NavigationSideDashboard" />
-        </div>
-        <div class="col-lg-9">
+        <div class="col-md-3 col-sm-3">
+        <uc1:NavigationSideDashboard runat="server" ID="NavigationSideDashboard" />
+    </div>
+     <div class="col-md-9 col-sm-9">
             <div class="panel panel-default">
                 <div class="panel-heading">
                     Write New Blog&nbsp;
@@ -152,10 +151,8 @@
                         <asp:Label ID="LabelEm" runat="server" Text="" Font-Bold="True" ForeColor="#CC0000"></asp:Label>
                     </div>
                     <div class="form-group">
-                        <div class="pull-left ">
-                            <asp:CheckBox ID="CheckBoxAuthorConfirm" runat="server" Text="This blog is writen by me." />
-                        </div>
                         <div class="pull-right ">
+                            <asp:CheckBox ID="CheckBoxPostToMyWall" CssClass="text-info text-muted" Text="Share on my wall" runat="server" />
                             <asp:Button ID="ButtonSubmit" runat="server" CssClass="btn btn-info " OnClick="ButtonSubmit_Click" Text="Submit" />
                         </div>
                     </div>

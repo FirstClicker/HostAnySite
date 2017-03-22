@@ -3,6 +3,10 @@
 <%@ Import Namespace ="System.ComponentModel" %>
 <script runat="server">
 
+    Public Event PostedSuccessfully_Notifier As EventHandler
+
+
+
     Public Property Wall_UserId() As String
         Get
             Return LabelWall_UserId.Text
@@ -73,6 +77,15 @@
         End Set
     End Property
 
+    Public Property Preview_ImageURL() As String
+        Get
+            Return LabelPreview_ImageURL.Text
+        End Get
+        Set(ByVal value As String)
+            LabelPreview_ImageURL.Text = value
+        End Set
+    End Property
+
     Public Property Preview_BodyText() As String
         Get
             Return LabelPreview_BodyText.Text
@@ -85,7 +98,7 @@
 
     Protected Sub SubmitStatus_Click(sender As Object, e As EventArgs)
         If Trim(Session("userid")) = "" Then
-            LabelStatusEm.Text = "Please login to post."
+            LabelStatusEm.Text = "Please login To post."
             Exit Sub
         End If
 
@@ -137,13 +150,11 @@
                 Exit Sub
             Else
                 ' success
-                '   Labelimageid.Text = Wallid
-                heading = "<a href='http://" & Request.Url.Host & "/user/" & Session("routusername") & "'>" & Session("username") & "</a> posted image"
-
+                heading = "posted image"
             End If
         Else
             WallImageid = 0
-            heading = "<a href='http://" & Request.Url.Host & "/user/" & Session("routusername") & "'>" & Session("username") & "</a> posted"
+            heading = "posted"
         End If
         ''''''''''''''''''''''
         'up load image
@@ -155,19 +166,20 @@
         Dim submituserwall As ClassHostAnySite.UserWall.StructureUserWall
         submituserwall = ClassHostAnySite.UserWall.UserWall_Add(heading, TextBoxStatus.Text, WallImageid, Session("userId"), MyWall_UserId, MyWall_BlogId, MyWall_ImageId, "active", ClassAppDetails.DBCS)
         If submituserwall.Result = False Then
-            LabelStatusEm.Text = "Failed to submit post."
+            LabelStatusEm.Text = "Failed To submit post."
             ' LabelStatusEm.Text =  submituserwall.My_Error_message  & " " & submituserwall.Sys_Error_message 
         Else
-            If CheckBoxPostToMyWall.Checked <> True Then
+            If CheckBoxPostToMyWall.Checked = True Then
                 Dim submituserwall2 As ClassHostAnySite.UserWall.StructureUserWall
-                submituserwall2 = ClassHostAnySite.UserWall.UserWall_Add(heading, TextBoxStatus.Text, WallImageid, Session("userId"), Session("userid"), MyWall_BlogId, MyWall_ImageId, "active", ClassAppDetails.DBCS, PreviewType, Preview_Heading.Replace("'", "''"), Preview_TargetURL.Replace("'", "''"), Preview_BodyText.Replace("'", "''"))
+                submituserwall2 = ClassHostAnySite.UserWall.UserWall_Add(heading, TextBoxStatus.Text, WallImageid, Session("userId"), Session("userid"), MyWall_BlogId, MyWall_ImageId, "active", ClassAppDetails.DBCS, PreviewType, Preview_Heading.Replace("'", "''"), Preview_TargetURL.Replace("'", "''"), Preview_BodyText.Replace("'", "''"), Preview_ImageURL.Replace("'", "''"))
             End If
+
+            RaiseEvent PostedSuccessfully_Notifier(Me, EventArgs.Empty)
 
             TextBoxStatus.Text = ""
             LabelStatusEm.Text = ""
 
             ListViewNotification.DataBind()
-
         End If
     End Sub
 
@@ -193,6 +205,7 @@
               <asp:Label ID="LabelPreviewType" runat="server" Text="" Visible="False"></asp:Label>
              <asp:Label ID="LabelPreview_Heading" runat="server" Text="" Visible="False"></asp:Label>
              <asp:Label ID="LabelPreview_TargetURL" runat="server" Text="" Visible="False"></asp:Label>
+            <asp:Label ID="LabelPreview_ImageURL" runat="server" Text="" Visible="False"></asp:Label>
              <asp:Label ID="LabelPreview_BodyText" runat="server" Text="" Visible="False"></asp:Label>
 
             
@@ -204,7 +217,7 @@
                 <asp:FileUpload ID="FileUpload1" runat="server" />
             </div>
             <div class="pull-right">
-                <asp:CheckBox ID="CheckBoxPostToMyWall" CssClass ="text-info text-muted" Text="Share on my wall" runat="server" />
+                <asp:CheckBox ID="CheckBoxPostToMyWall" CssClass ="text-info text-muted" Text="Share on my wall" runat="server" Checked ="true"  />
                 <asp:Button runat="server" ID="SubmitStatus" type="button" class="btn btn-info" Text="Post" OnClick="SubmitStatus_Click" />
             </div>
         </div>
@@ -221,9 +234,7 @@
             </EmptyDataTemplate>
 
             <ItemTemplate>
-
-                <uc1:UserWallEntry runat="server" ID="UserWallEntry" WallUserURL='<%# "~/user/" + Eval("RoutUserName")%>' WallUserImage='<%# "~/storage/image/" + Eval("userimagefilename")%>' WallHeading='<%# Eval("Heading") %>' WallDatetime='<%# Eval("postdate") %>' WallMessage='<%# Eval("Message") %>' WallPostImage='<%# "~/storage/image/" + Eval("PostImageFilename")%>'   WallID='<%# Eval("Wallid")%>' numberofcomment='<%# Eval("numberofcomment")%>' />
-
+                <uc1:UserWallEntry runat="server" ID="UserWallEntry" UserID='<%# Eval("UserID")%>' RoutUserName='<%# Eval("RoutUserName")%>' UserName='<%# Eval("UserName")%>'  WallUserImage='<%# "~/storage/image/" + Eval("userimagefilename")%>' WallHeading="Posted" WallDatetime='<%# Eval("postdate") %>' WallMessage='<%# Eval("Message") %>'  WallPostImageURL ='<%# "~/storage/image/" + Eval("PostImageFilename")%>' WallPostImageID ='<%# Eval("ImageID")%>' WallID='<%# Eval("Wallid")%>' numberofcomment='<%# Eval("numberofcomment")%>' />
             </ItemTemplate>
             <LayoutTemplate>
                 <div id="itemPlaceholderContainer" runat="server">
@@ -232,17 +243,16 @@
             </LayoutTemplate>
         </asp:ListView>
         <asp:SqlDataSource ID="SqlDataSourceCommnet" runat="server" ConnectionString="<%$ ConnectionStrings:AppConnectionString %>"
-            SelectCommand="SELECT t.Wallid, t.heading, t.message, t.postdate, t.userid, t.imageid, t2.RoutUserName, t1.ImageFileName as PostImageFilename, t3.ImageFileName as userimagefilename, count(TUWC.wallId) as numberofcomment  
+            SelectCommand="SELECT t.Wallid, t.heading, t.message, t.postdate, t.userid, t.imageid, t2.RoutUserName, t2.UserName, t1.ImageFileName as PostImageFilename, t3.ImageFileName as userimagefilename, count(TUWC.wallId) as numberofcomment  
                         FROM [Table_UserWall] t
                         left JOIN table_image t1 ON t.ImageID=t1.ImageID 
                         left JOIN table_User t2 on t.userid = t2.userid
                         left JOIN table_image t3 on t2.Imageid = t3.Imageid
                         left join table_userwallComment TUWC on t.Wallid=TUWC.wallId
-                        WHERE (t.Wall_UserId = @Wall_UserId) or (t.Wall_BlogId = @Wall_BlogId) 
-                        group by t.Wallid, t.heading, t.message, t.postdate, t.userid, t.imageid, t2.RoutUserName, t1.ImageFileName , t3.ImageFileName  
+                        WHERE (t.Wall_UserId ='0') and (t.Wall_BlogId = @Wall_BlogId) 
+                        group by t.Wallid, t.heading, t.message, t.postdate, t.userid, t.imageid, t2.RoutUserName, t2.UserName, t1.ImageFileName , t3.ImageFileName  
                         ORDER BY t.[postdate] DESC" OnSelected ="SqlDataSourceCommnet_Selected">
             <SelectParameters>
-                <asp:ControlParameter ControlID="LabelWall_UserId" PropertyName="text" Name="Wall_UserId" Type="String"></asp:ControlParameter>
                 <asp:ControlParameter ControlID="LabelWall_BlogId" PropertyName="text" Name="Wall_BlogId" Type="String"></asp:ControlParameter>
             </SelectParameters>
         </asp:SqlDataSource>

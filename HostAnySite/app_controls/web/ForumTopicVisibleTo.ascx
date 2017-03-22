@@ -59,7 +59,7 @@
         End If
     End Sub
 </script>
-  <asp:DropDownList ID="DropDownListTopicVisibleTo" runat="server" AutoPostBack="True" Width="100px" OnSelectedIndexChanged="DropDownListTopicVisibleTo_SelectedIndexChanged">
+  <asp:DropDownList ID="DropDownListTopicVisibleTo" runat="server" AutoPostBack="True"  CssClass ="form-control" OnSelectedIndexChanged="DropDownListTopicVisibleTo_SelectedIndexChanged">
             </asp:DropDownList>
   <asp:Label ID="LabelTopicID" runat="server" Text=" " Visible="False"></asp:Label>
             <asp:Label ID="LabelEM" runat="server" Text=" " Visible="false"></asp:Label>

@@ -98,10 +98,10 @@
 <asp:Content ID="Content2" ContentPlaceHolderID="ContentPlaceHolder1" runat="Server">
     <uc1:ValidateUserAccess runat="server" ID="ValidateUserAccess" />
     <div class="row">
-        <div class="col-md-3">
-            <uc1:NavigationSideDashboard runat="server" ID="NavigationSideDashboard" />
-        </div>
-        <div class="col-lg-8">
+        <div class="col-md-3 col-sm-3">
+        <uc1:NavigationSideDashboard runat="server" ID="NavigationSideDashboard" />
+    </div>
+     <div class="col-md-9 col-sm-9">
             <div class="row ">
                 <div class="panel panel-default">
                     <div class="panel-heading">Change your profile Details</div>
@@ -122,21 +122,21 @@
                         <div class="list-group-item disabled ">Profile Picture :</div>
                         <div class="list-group-item">
 
-                                <div class="media">
-                                    <asp:Image ID="Image1" runat="server" Width="95px" CssClass="pull-left" />
-                                    <div class="media-body">
-                                        <div class="form-group ">
-                                            <asp:FileUpload ID="FileUpload1" runat="server" />
-                                        </div>
-                                        <div class="form-group ">
-                                            <asp:Button ID="ButtonSubmit" runat="server" Text="Change Image"
-                                                Width="175px" Height="27px" OnClick="ButtonSubmit_Click" />
-                                        </div>
-                                        <div class="form-group ">
-                                            <asp:Label ID="LabelEm" runat="server"></asp:Label>
-                                        </div>
+                            <div class="media">
+                                <asp:Image ID="Image1" runat="server" Width="95px" CssClass="pull-left" />
+                                <div class="media-body">
+                                    <div class="form-group ">
+                                        <asp:FileUpload ID="FileUpload1" runat="server" />
+                                    </div>
+                                    <div class="form-group ">
+                                        <asp:Button ID="ButtonSubmit" runat="server" Text="Change Image"
+                                            Width="175px" Height="27px" OnClick="ButtonSubmit_Click" />
+                                    </div>
+                                    <div class="form-group ">
+                                        <asp:Label ID="LabelEm" runat="server"></asp:Label>
                                     </div>
                                 </div>
+                            </div>
 
                         </div>
                         <div class="list-group-item disabled ">Profile Banner :</div>
@@ -151,7 +151,7 @@
                                     </div>
                                     <div class="pull-right ">
                                         <asp:Button ID="ButtonUploadBanner" runat="server" Text="Change Image"
-                                            CssClass="btn btn-info " OnClick ="ButtonUploadBanner_Click"  />
+                                            CssClass="btn btn-info " OnClick="ButtonUploadBanner_Click" />
                                     </div>
                                 </div>
 

@@ -8,11 +8,9 @@
 <script runat="server">
 
     Protected Sub Page_Load(sender As Object, e As EventArgs)
-
         If Me.IsPostBack = False Then
             loadThemeInfo()
         End If
-
     End Sub
 
     Private Function loadThemeInfo() As Boolean
@@ -51,12 +49,29 @@
 
 
     Protected Sub ButtonSave_Click(sender As Object, e As EventArgs)
-        If DropDownListTheme.SelectedIndex = 0 Then Exit Sub
+        If DropDownListTheme.SelectedIndex = 0 Then
+            Exit Sub
+        End If
+
         ClassHostAnySite.WebSetting.WebSetting_Update("CurrentTheme", DropDownListTheme.SelectedValue, ClassAppDetails.DBCS)
 
         ClassAppDetails.loadAppValiable()
 
         Response.Redirect(Request.Url.ToString)
+    End Sub
+
+    Protected Sub DropDownListTheme_SelectedIndexChanged(sender As Object, e As EventArgs)
+        Dim MySetting As ClassHostAnySite.WebSetting.StructureWebSetting
+
+        If DropDownListTheme.SelectedIndex = 0 Then
+            Exit Sub
+        End If
+
+        MySetting = ClassHostAnySite.WebSetting.WebSetting_Get(DropDownListTheme.SelectedItem.ToString, ClassAppDetails.DBCS)
+        LabelCurrentTheme.Text = MySetting.SettingName
+        ImagethemePreview.ImageUrl = "~/content/image/theme/" & MySetting.SettingName.Trim & ".png"
+        ImagethemePreview.Visible = True
+        Exit Sub
     End Sub
 </script>
 
@@ -72,13 +87,24 @@
             <div class="panel panel-default">
                 <div class="panel-heading">Change Theme</div>
                 <div class="panel-body">
-                    <div>
+                    <div class="form">
                         <div class="form-group">
-                            <label for="email">Select Theme:</label>
-                            <asp:DropDownList ID="DropDownListTheme" runat="server" CssClass ="form-control"></asp:DropDownList>
+                            <div class="input-group ">
+                                <div class=" input-group-addon ">Select Theme:</div>
+                                <asp:DropDownList ID="DropDownListTheme" runat="server" AutoPostBack ="true" OnSelectedIndexChanged ="DropDownListTheme_SelectedIndexChanged" CssClass ="form-control"></asp:DropDownList>
+                                <div class="input-group-btn ">
+                                    <asp:Button ID="ButtonSave" CssClass="btn btn-Info pull-right " runat="server" Text="Save" OnClick="ButtonSave_Click" />
+                                </div>
+                            </div>
                         </div>
-                        <asp:Button ID="ButtonSave" cssclass="btn btn-Info" runat="server" Text="Save" OnClick ="ButtonSave_Click" />
-
+                    </div>
+                    <div class="panel panel-success">
+                        <div class="panel-heading">
+                            Theme Preview : <asp:Label ID="LabelCurrentTheme" runat="server" Text=""></asp:Label>
+                        </div>
+                        <div class="panel-body ">
+                             <asp:Image ID="ImagethemePreview" CssClass ="img-responsive" runat="server" Visible ="false" />
+                        </div>
                     </div>
                 </div>
             </div>

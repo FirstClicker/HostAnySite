@@ -541,7 +541,7 @@
                               
                                     <div class="form-horizontal">
                                         <div class="form-group">
-                                            <label for="TextBoxServerPath" class="control-label col-xs-3">Server Path</label>
+                                            <label for="TextBoxServerPath" class="control-label col-xs-3">SQL Server Path</label>
                                             <div class="col-xs-9">
                                                 <asp:TextBox ID="TextBoxServerPath" runat="server" CssClass="form-control "></asp:TextBox>
                                             </div>
@@ -555,7 +555,7 @@
                                         </div>
 
                                         <div class="form-group">
-                                            <label for="TextBoxAdminPass" class="control-label col-xs-3">SAdmin Password</label>
+                                            <label for="TextBoxAdminPass" class="control-label col-xs-3">Admin Password</label>
                                             <div class="col-xs-9">
                                                 <asp:TextBox ID="TextBoxAdminPass" runat="server" CssClass="form-control " Text="" />
                                             </div>

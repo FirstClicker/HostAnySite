@@ -53,7 +53,7 @@
 
 
             Dim posttowall As ClassHostAnySite.UserWall.StructureUserWall
-            posttowall = ClassHostAnySite.UserWall.UserWall_Add("<a href='http://" & Request.Url.Host & "/user/" & createuser.RoutUserName & "'>" & createuser.UserName & "</a>", createuser.UserName & ", A new user just registered.", "0", createuser.UserID, createuser.UserID, 0, "0", "visible", ClassAppDetails.DBCS)
+            posttowall = ClassHostAnySite.UserWall.UserWall_Add("", "Hi, I jost Joined...", "0", createuser.UserID, createuser.UserID, 0, "0", "visible", ClassAppDetails.DBCS)
 
             If returnurl = "" Then
                 Response.Redirect("~/Dashboard/")

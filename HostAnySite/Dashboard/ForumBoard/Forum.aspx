@@ -14,10 +14,10 @@
     <uc1:ValidateUserAccess runat="server" ID="ValidateUserAccess" />
 
     <div class="row">
-        <div class="col-md-3">
-            <uc1:NavigationSideDashboard runat="server" ID="NavigationSideDashboard" />
-        </div>
-        <div class="col-md-9">
+      <div class="col-md-3 col-sm-3">
+        <uc1:NavigationSideDashboard runat="server" ID="NavigationSideDashboard" />
+    </div>
+     <div class="col-md-9 col-sm-9">
             <div class="panel panel-default">
                 <asp:ListView ID="ListViewForum" runat="server" DataSourceID="SqlDataSourceForum" DataKeyNames="Forum_Id">
 

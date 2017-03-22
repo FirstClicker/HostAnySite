@@ -8,6 +8,8 @@
 <%@ Import Namespace="System.Data.SqlClient" %>
 <%@ Register Src="~/app_controls/web/UserWallPost.ascx" TagPrefix="uc1" TagName="UserWallPost" %>
 <%@ Register Src="~/app_controls/web/MenuUserProfile.ascx" TagPrefix="uc1" TagName="MenuUserProfile" %>
+<%@ Register Src="~/app_controls/web/WhatsHappening.ascx" TagPrefix="uc1" TagName="WhatsHappening" %>
+
 
 
 
@@ -55,11 +57,15 @@
             UserWallPost.Preview_Heading = blogdetails.Heading
             UserWallPost.Preview_TargetURL = "http://" & Request.Url.Host & "/blog/" & blogdetails.BlogId & "/" & blogdetails.Heading.Replace(" ", "-")
             UserWallPost.Preview_BodyText = Mid(Labelheighlight.Text, 1, 500)
+            If Blogimage.Visible = True Then
+                UserWallPost.Preview_ImageURL = "http://" & Request.Url.Host & "/storage/image/" & blogdetails.blogImage.ImageFileName
+            End If
 
 
             Dim userinfo As ClassHostAnySite.User.StructureUser = ClassHostAnySite.User.UserDetail_UserID(blogdetails.userid, ClassAppDetails.DBCS)
             Hyperuser.Text = userinfo.UserName
             Hyperuser.NavigateUrl = "~/user/" & userinfo.RoutUserName
+            LabelUserID.Text = userinfo.UserID
 
             MenuUserProfile.UserName = Trim(userinfo.UserName)
             MenuUserProfile.ImageFileName = userinfo.UserImage.ImageFileName
@@ -76,7 +82,7 @@
 
 
         Me.Title = HyperHeading.Text
-        Me.MetaDescription = Labelheighlight.Text
+        Me.MetaDescription = Mid(Labelheighlight.Text, 1, 250)
         Me.MetaKeywords = ""
 
     End Sub
@@ -99,8 +105,11 @@
     End Sub
 
 
-
-
+    Protected Sub UserWallPost_PostedSuccessfully_Notifier(sender As Object, e As EventArgs)
+        'Notify Blog User
+        Dim notificatidetails As ClassHostAnySite.UserNotification.StructureNotification
+        notificatidetails = ClassHostAnySite.UserNotification.Notification_Add(Session("UserId"), LabelUserID.Text, "Posted comment on your blog.", Request.Url.ToString, 0, ClassAppDetails.DBCS)
+    End Sub
 </script>
 
 <asp:Content ID="Content1" ContentPlaceHolderID="head" runat="Server">
@@ -113,7 +122,7 @@
 </asp:Content>
 <asp:Content ID="Content2" ContentPlaceHolderID="ContentPlaceHolder1" runat="Server">
     <div class="row">
-        <div class="col-lg-9 col-md-9 ">
+        <div class="col-lg-9 col-md-9 col-sm-12 ">
             <div class="col-lg-3 col-md-3 col-sm-3">
                 <uc1:MenuUserProfile runat="server" ID="MenuUserProfile" />
             </div>
@@ -140,7 +149,7 @@
                                     By
                             <asp:HyperLink ID="Hyperuser" CssClass=" text-capitalize " runat="server">User Name</asp:HyperLink>
                                 </p>
-
+                                <asp:Label ID="LabelUserID" runat="server" Text="" Visible ="false" ></asp:Label>
                             </div>
                             <div class="pull-right ">
                                 <p>
@@ -154,52 +163,15 @@
 
                 <asp:UpdatePanel ID="UpdatePanel2" runat="server" UpdateMode="Conditional">
                     <ContentTemplate>
-                        <uc1:UserWallPost runat="server" ID="UserWallPost" />
+                        <uc1:UserWallPost runat="server" ID="UserWallPost" OnPostedSuccessfully_Notifier ="UserWallPost_PostedSuccessfully_Notifier" />
                     </ContentTemplate>
                 </asp:UpdatePanel>
 
 
             </div>
         </div>
-        <div class="col-lg-3 col-md-3">
-            <div class="panel panel-default">
-                <div class="panel-heading">What's Happening?</div>
-                <div class="list-group">
-                    <asp:ListView ID="ListViewNotification" runat="server" DataKeyNames="wallID" DataSourceID="SqlDataSource1">
-                        <EmptyDataTemplate>
-                            <div class="panel-body ">No user activity.</div>
-                        </EmptyDataTemplate>
-                        <ItemTemplate>
-                            <uc1:UserWallEntry runat="server" ID="UserWallEntry" WallUserURL='<%# "~/user/" + Eval("RoutUserName")%>' WallUserImage='<%# "~/storage/image/" + Eval("userimagefilename")%>' WallHeading='<%# Eval("Heading") %>' WallDatetime='<%# Eval("postdate")%>' WallMessage='<%# Eval("Message") %>' WallPostImage='<%# "~/storage/image/" + Eval("PostImageFilename")%>'   WallID='<%# Eval("wallId")%>' numberofcomment='<%# Eval("numberofcomment")%>' />
-                        </ItemTemplate>
-                        <LayoutTemplate>
-                            <div id="itemPlaceholderContainer" runat="server">
-                                <div runat="server" id="itemPlaceholder" />
-                            </div>
-                        </LayoutTemplate>
-                    </asp:ListView>
-                    <asp:SqlDataSource ID="SqlDataSource1" runat="server" ConnectionString="<%$ ConnectionStrings:AppConnectionString %>"
-                        SelectCommand="SELECT t.wallid, t.heading, t.message, CONVERT(VARCHAR(19), t.postdate, 120) AS postdate, t.userid, t.imageid, t2.RoutUserName, t1.ImageFileName as PostImageFilename, t3.ImageFileName as userimagefilename, count(TUWC.wallId) as numberofcomment 
-                        FROM [Table_UserWall] t
-                        left JOIN table_image t1 ON t.ImageID=t1.ImageID 
-                        left JOIN table_User t2 on t.userid = t2.userid
-                        left JOIN table_image t3 on t2.Imageid = t3.Imageid
-                        left join table_userwallComment TUWC on t.wallid=TUWC.wallId
-                        group by t.wallid, t.heading, t.message, t.postdate, t.userid, t.imageid, t2.RoutUserName, t1.ImageFileName , t3.ImageFileName  
-                        ORDER BY t.[postdate] DESC"></asp:SqlDataSource>
-                </div>
-                <div class="panel-footer clearfix">
-                    <div class="pull-right">
-                        <asp:DataPager runat="server" ID="DataPagerNotification" PagedControlID="ListViewNotification" PageSize="5">
-                            <Fields>
-                                <asp:NumericPagerField PreviousPageText="<<" NextPageText=">>" ButtonCount="5" NumericButtonCssClass="btn btn-xs btn-default" CurrentPageLabelCssClass="btn btn-xs btn-default" NextPreviousButtonCssClass="btn btn-xs btn-default" />
-                            </Fields>
-                        </asp:DataPager>
-                    </div>
-                    <div class="pull-Left">
-                    </div>
-                </div>
-            </div>
+        <div class="col-lg-3 col-md-3 col-sm-12">
+            <uc1:WhatsHappening runat="server" ID="WhatsHappening" />
         </div>
     </div>
 

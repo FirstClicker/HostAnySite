@@ -5,8 +5,6 @@
 
 <script runat="server">
 
-
-
     Public Property UserID() As String
         Get
             Return LabeluserID.Text
@@ -16,13 +14,21 @@
         End Set
     End Property
 
-
-    Public Property WallUserURL() As String
+    Public Property UserName() As String
         Get
-            Return HyperLinkUserURL.NavigateUrl
+            Return HyperLinkUserName.Text
         End Get
         Set(ByVal value As String)
-            HyperLinkUserURL.NavigateUrl = value
+            HyperLinkUserName.Text = value
+        End Set
+    End Property
+
+    Public Property RoutUserName() As String
+        Get
+            Return LabelRoutUserName.Text
+        End Get
+        Set(ByVal value As String)
+            LabelRoutUserName.Text = value
         End Set
     End Property
 
@@ -46,45 +52,10 @@
 
     Public Property WallHeading() As String
         Get
-            Return HeadingLabel.Text
+            Return LabelHeading.Text
         End Get
         Set(ByVal value As String)
-            HeadingLabel.Text = value
-        End Set
-    End Property
-
-    Public Property WallDatetime() As String
-        Get
-            Return postdateLabel.Text
-        End Get
-        Set(ByVal value As String)
-            Dim result As DateTime
-            Try
-                result = DateTime.ParseExact(value, "yyyy-MM-dd HH:mm:ss", Nothing)
-            Catch ex As Exception
-                postdateLabel.Text = value
-                Exit Property
-            End Try
-
-
-            Dim diff1 As System.TimeSpan
-            diff1 = Now.Subtract(Result)
-
-            If diff1.TotalHours < 1 Then
-                postdateLabel.Text = diff1.TotalMinutes & "mins"
-            Else
-                If diff1.TotalDays < 1 Then
-                    postdateLabel.Text = diff1.TotalHours & "hours"
-                Else
-                    If diff1.TotalDays < 30 Then
-                        postdateLabel.Text = diff1.TotalDays & "hours"
-                    Else
-                        postdateLabel.Text = Result.ToLongDateString
-                    End If
-                End If
-            End If
-
-            postdateLabel.Text = value
+            LabelHeading.Text = value
         End Set
     End Property
 
@@ -97,23 +68,65 @@
         End Set
     End Property
 
-    Public Property WallPostImage() As String
+    Public Property WallDatetime() As String
         Get
-            Return WallImage.ImageUrl
+            Return postdateLabel.Text
         End Get
         Set(ByVal value As String)
-            WallImage.ImageUrl = value
+            postdateLabel.Text = ClassHostAnySite.HostAnySite.ConvertDateTime4Use(value)
+        End Set
+    End Property
+
+    Public Property WallPostImageURL() As String
+        Get
+            Return WallPostImage.ImageUrl
+        End Get
+        Set(ByVal value As String)
+            WallPostImage.ImageUrl = value
         End Set
     End Property
 
     Public Property WallPostImageID() As String
         Get
-            Return LabelWallImageID.text
+            Return LabelWallPostImageID.Text
         End Get
         Set(ByVal value As String)
-            LabelWallImageID.Text = value
+            LabelWallPostImageID.Text = value
+            WallPostImage.Visible = CBool(value)
         End Set
     End Property
+
+
+    Public Property Wall_UserId() As String
+        Get
+            Return LabelWall_UserId.Text
+        End Get
+        Set(ByVal value As String)
+            LabelWall_UserId.Text = value
+        End Set
+    End Property
+
+    Public Property Wall_UserName() As String
+        Get
+            Return LabelWall_UserName.Text
+        End Get
+        Set(ByVal value As String)
+            LabelWall_UserName.Text = value
+        End Set
+    End Property
+
+
+    Public Property Wall_RoutUserName() As String
+        Get
+            Return LabelWall_RoutUserName.Text
+        End Get
+        Set(ByVal value As String)
+            LabelWall_RoutUserName.Text = value
+        End Set
+    End Property
+
+
+
 
     Public Property numberofcomment() As String
         Get
@@ -175,6 +188,15 @@
         End Set
     End Property
 
+    Public Property Preview_ImageURL() As String
+        Get
+            Return LabelPreview_ImageURL.Text
+        End Get
+        Set(ByVal value As String)
+            LabelPreview_ImageURL.Text = value
+        End Set
+    End Property
+
     Public Property Preview_BodyText() As String
         Get
             Return LabelPreview_BodyText.Text
@@ -232,9 +254,16 @@
     End Sub
 
     Protected Sub Page_PreRender(sender As Object, e As EventArgs)
+        HyperLinkUserName.NavigateUrl = "~/user/" & RoutUserName
         If IsPostBack = False Then
 
+            If Val(Wall_UserId) <> 0 And Val(Wall_UserId) <> Val(UserID) Then
+                HyperLinkPostedOnusername.Text = Wall_UserName
+                HyperLinkPostedOnusername.NavigateUrl = "~/user/" & Wall_RoutUserName
+            End If
 
+
+            'Action Button Coding XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
             Dim Cusertype As New ClassHostAnySite.User.UserType
             Try
                 Cusertype = [Enum].Parse(GetType(ClassHostAnySite.User.UserType), Trim(Session("UserType")), True)
@@ -247,6 +276,8 @@
             If Val(UserID) > 10 And Val(UserID) = Val(Session("UserID")) Then
                 LIActionDelete.Visible = True
             End If
+            'Action Button Coding XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+
 
             Dim myConn As SqlConnection
             Dim myCmd As SqlCommand
@@ -267,26 +298,27 @@
             myReader.Read()
             numberofDisLike = myReader.Item("lc")
 
-
             myReader.Close()
             myConn.Close()
 
             If PreviewType = ClassHostAnySite.UserWall.PreviewTypeEnum.MediaView Then
                 PanelPreviewTypeMediaView.Visible = True
 
-                PreviewTypeMediaViewImage.ImageUrl = WallPostImage
+                If Trim(Preview_ImageURL) <> "" Then
+                    PreviewTypeMediaViewImage.ImageUrl = Preview_ImageURL
+                End If
+
                 PreviewTypeMediaViewheading.Text = Preview_Heading
                 PreviewTypeMediaViewheading.NavigateUrl = Preview_TargetURL
                 PreviewTypeMediaViewBody.Text = Preview_BodyText
 
-                PanelPreviewMediaViewImageCointainer.Visible = CBool(WallPostImageID)
-
+                PanelPreviewMediaViewImageCointainer.Visible = CBool(Len(Trim(Preview_ImageURL)))
             End If
 
             If PreviewType = ClassHostAnySite.UserWall.PreviewTypeEnum.ImageView Then
                 PanelPreviewTypeImageView.Visible = True
+                PreviewTypeImageViewImage.ImageUrl = Preview_ImageURL
             End If
-
 
         End If
     End Sub
@@ -298,9 +330,20 @@
     End Sub
 </script>
 
+
+<asp:Label ID="LabeluserID" runat="server" Text="0" Visible="False"></asp:Label>
+<asp:Label ID="LabelRoutUserName" runat="server" Text="" Visible="False"></asp:Label>
+
+<asp:Label ID="LabelWallID" runat="server" Text="0" Visible="False"></asp:Label>
+<asp:Label ID="LabelWall_UserId" runat="server" Text="0" Visible="False"></asp:Label>
+<asp:Label ID="LabelWall_UserName" runat="server" Text="" Visible="False"></asp:Label>
+<asp:Label ID="LabelWall_RoutUserName" runat="server" Text="" Visible="False"></asp:Label>
+
+          
 <asp:Label ID="LabelPreviewType" runat="server" Text="" Visible="False"></asp:Label>
 <asp:Label ID="LabelPreview_Heading" runat="server" Text="" Visible="False"></asp:Label>
 <asp:Label ID="LabelPreview_TargetURL" runat="server" Text="" Visible="False"></asp:Label>
+<asp:Label ID="LabelPreview_ImageURL" runat="server" Text="" Visible="False"></asp:Label>
 <asp:Label ID="LabelPreview_BodyText" runat="server" Text="" Visible="False"></asp:Label>
 
 <asp:Panel ID="panelContainer" runat="server" CssClass="panel panel-default">
@@ -325,10 +368,10 @@
                     </ul>
                 </div>
                 <h5 class="media-heading">
-                    <asp:Label ID="HeadingLabel" CssClass="text-capitalize" runat="server" Text="" />
+                    <asp:HyperLink ID="HyperLinkUserName" CssClass="text-capitalize" runat="server"></asp:HyperLink>
+                    <asp:Label ID="LabelHeading" CssClass="text-capitalize" runat="server" Text="" />
+                   on&nbsp;<asp:HyperLink ID="HyperLinkPostedOnusername" runat="server"></asp:HyperLink>
                 </h5>
-                <asp:Label ID="LabelWallID" runat="server" Text="0" Visible="False"></asp:Label>
-                <asp:Label ID="LabeluserID" runat="server" Text="0" Visible="False"></asp:Label>
                 <small>
                     <asp:Label ID="postdateLabel" runat="server" Text="" />
                 </small>
@@ -337,23 +380,29 @@
         <hr style="margin: 4px;" />
     </div>
     <div class="panel-body" style ="word-wrap: break-word;">
-        <asp:Label ID="MessageLabel" runat="server" Text="" />
+        <asp:Label ID="MessageLabel" runat="server" Text="" /><br />
+          <asp:Label ID="LabelWallPostImageID" runat="server" Text="0" Visible="false"></asp:Label>
+          <asp:Image runat="server" ID="WallPostImage" CssClass="img-responsive" style="margin-top :10px;" />
     </div>
 
     <asp:Panel runat="server" ID="PanelPreviewTypeMediaView" CssClass="panel-body" Visible="false">
         <div class="panel panel-default">
             <div class="panel-body">
                 <div class="media">
-                    <asp:panel runat ="server" ID="PanelPreviewMediaViewImageCointainer" class="media-left">
-                        <asp:Image runat="server" ID="PreviewTypeMediaViewImage" Width="150" />
-                    </asp:panel>
+                    
                     <div class="media-body">
                         <h4 class="media-heading">
                             <asp:HyperLink ID="PreviewTypeMediaViewheading" runat="server"></asp:HyperLink>
                         </h4>
-                        <p>
-                            <asp:Label ID="PreviewTypeMediaViewBody" runat="server" Text=""></asp:Label>
-                        </p>
+                        <div>
+                            <asp:Panel runat="server" ID="PanelPreviewMediaViewImageCointainer" style="float:right;width:40%;">
+                                <asp:Image runat="server" ID="PreviewTypeMediaViewImage" CssClass="img-responsive" />
+                            </asp:Panel>
+                            <p>
+                                <asp:Label ID="PreviewTypeMediaViewBody" runat="server" Text=""></asp:Label>
+                            </p>
+                        </div>
+                     
                     </div>
                 </div>
             </div>
@@ -363,8 +412,7 @@
     <asp:Panel runat="server" ID="PanelPreviewTypeImageView" CssClass="panel-body" Visible="false">
         <div class="panel panel-default">
             <div class="panel-body">
-                <asp:Label ID="LabelWallImageID" runat="server" Text="0" Visible="false"></asp:Label>
-                <asp:Image runat="server" ID="WallImage" CssClass="img-responsive" />
+               <asp:Image runat="server" ID="PreviewTypeImageViewImage"  CssClass ="img-responsive" />
             </div>
         </div>
     </asp:Panel>
@@ -390,11 +438,13 @@
             <asp:UpdatePanel ID="UpdatePanel2" runat="server" UpdateMode="Conditional">
                 <ContentTemplate>
                     <div class="form">
-                        <div class="input-group">
-                            <asp:TextBox ID="TextBoxComment" runat="server" CssClass="form-control"></asp:TextBox>
-                            <span class="input-group-btn">
-                                <asp:Button ID="ButtonPostComment" CssClass="btn btn-default" runat="server" Text="Post" OnClick="ButtonPostComment_Click" UseSubmitBehavior="False" />
-                            </span>
+                        <div class="form-group">
+                            <div class="input-group">
+                                <asp:TextBox ID="TextBoxComment" runat="server" CssClass="form-control"></asp:TextBox>
+                                <span class="input-group-btn">
+                                    <asp:Button ID="ButtonPostComment" CssClass="btn btn-default" runat="server" Text="Post" OnClick="ButtonPostComment_Click" UseSubmitBehavior="False" />
+                                </span>
+                            </div>
                         </div>
                     </div>
                     <asp:ListView ID="ListViewWallComment" runat="server" DataKeyNames="WallCommentId" DataSourceID="SqlDataSourceWallcomment">
@@ -404,19 +454,19 @@
                         <ItemTemplate>
                             <div class="list-group-item">
                                 <div class="media">
-                                    <asp:HyperLink ID="HyperLinkUserURL" runat="server" class="pull-left">
+                                    <asp:HyperLink ID="HyperLinkUserURL" runat="server" class="media-left">
                                         <asp:Image runat="server" ID="userimg" class="media-object" ImageUrl='<%# "~/storage/image/" + Eval("userimagefilename")%>' Width="33" Height="44" />
                                     </asp:HyperLink>
                                     <div class="media-body">
-                                        <asp:Label ID="CommentLabel" runat="server" Text='<%# Eval("Comment") %>' />
-                                        <br />
-
-                                        <small>
-                                            <asp:Label ID="UserIdLabel" runat="server" Text='<%# Eval("Username")%>' />
-                                            (
-                                            <asp:Label ID="PostDateLabel" runat="server" Text='<%# Eval("PostDate") %>' />
-                                            )
-                                        </small>
+                                        <h5 class="media-heading">
+                                            <asp:Label ID="UserIdLabel" runat="server" CssClass="text-capitalize" Text='<%# Eval("Username")%>' />
+                                            <small>
+                                                <asp:Label ID="PostDateLabel" runat="server" Text='<%# ClassHostAnySite.HostAnySite.ConvertDateTime4Use(Eval("PostDate")) %>' />
+                                            </small>
+                                        </h5>
+                                        <p>
+                                            <asp:Label ID="CommentLabel" runat="server" Text='<%# Eval("Comment") %>' />
+                                        </p>
                                     </div>
                                 </div>
                             </div>
@@ -425,13 +475,11 @@
                             <div id="itemPlaceholderContainer" runat="server" class="list-group">
                                 <div runat="server" id="itemPlaceholder" />
                             </div>
-                            <div style="text-align: center; background-color: #5D7B9D; font-family: Verdana, Arial, Helvetica, sans-serif; color: #FFFFFF;">
-                            </div>
                         </LayoutTemplate>
                     </asp:ListView>
                     <asp:SqlDataSource ID="SqlDataSourceWallcomment" runat="server"
                         ConnectionString="<%$ ConnectionStrings:AppConnectionString %>"
-                        SelectCommand="SELECT TUWC.WallCommentId, TUWC.WallId, TUWC.Comment, TUWC.UserId, TUWC.PostDate, tU.Username, ti.ImageFileName as userimagefilename  
+                        SelectCommand="SELECT TUWC.WallCommentId, TUWC.WallId, TUWC.Comment, TUWC.UserId, CONVERT(VARCHAR(19), TUWC.PostDate, 120) AS postdate , tU.Username, ti.ImageFileName as userimagefilename  
                                 FROM [Table_UserWallComment] TUWC
                                 left JOIN table_User tU on tU.userid = TUWC.userid
                                 left JOIN table_image TI on tI.Imageid = tU.Imageid

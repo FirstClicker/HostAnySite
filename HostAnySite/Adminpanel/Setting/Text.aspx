@@ -42,7 +42,10 @@
     End Sub
 
     Protected Sub DropDownListSetting_SelectedIndexChanged(sender As Object, e As EventArgs)
-        If DropDownListSetting.SelectedIndex = 0 Then Exit Sub
+        If DropDownListSetting.SelectedIndex = 0 Then
+            TextBoxContent.Text = ""
+            Exit Sub
+        End If
 
         Dim myConn As SqlConnection
         Dim myCmd As SqlCommand
@@ -99,7 +102,7 @@
                                         <cc1:JustifyRight />
                                         <cc1:JustifyFull />
                                         <cc1:RemoveFormat />
-                                        
+                                        <cc1:CreateLink />
                                     </Toolbar>
                                 </cc1:HtmlEditorExtender>
                             </div>

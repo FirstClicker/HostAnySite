@@ -42,7 +42,9 @@
 
 
 
-
+        Me.Title = MenuUserProfile.UserName
+        Me.MetaDescription = MenuUserProfile.UserName & "' Followed By"
+        Me.MetaKeywords = ""
 
 
     End Sub

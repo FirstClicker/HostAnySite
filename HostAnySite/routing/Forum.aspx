@@ -37,14 +37,21 @@
             LabelUserID.Text = foruminfo.UserID
             LabelForumShowInHome.Text = foruminfo.ShowInHome.ToString
 
+            LabelDate.Text = ClassHostAnySite.HostAnySite.ConvertDateTime4Use(foruminfo.CreateDate.ToString("yyyy-MM-dd HH:mm:ss"))
+            LabelDrescption.Text = foruminfo.Drescption
+
+
             Dim userInfo As ClassHostAnySite.User.StructureUser = ClassHostAnySite.User.UserDetail_UserID(foruminfo.UserID, ClassAppDetails.DBCS)
             HyperLinkUserName.Text = userInfo.UserName
             HyperLinkUserName.NavigateUrl = "~/user/" & userInfo.RoutUserName
             ImageForumUser.ImageUrl = "~/Storage/Image/" & userInfo.UserImage.ImageFileName
 
-            LabelDate.Text = foruminfo.CreateDate
-            LabelDrescption.Text = foruminfo.Drescption
+
         End If
+
+        Me.Title = LabelHeading.Text
+        Me.MetaDescription = Mid(LabelDrescption.Text, 1, 250)
+        Me.MetaKeywords = ""
 
     End Sub
 
@@ -129,7 +136,6 @@
                     <h1 class="panel-title ">
                         <asp:HyperLink ID="HyperLink1" runat="server" NavigateUrl="~/Forum/Default.aspx">Forum</asp:HyperLink>
                     </h1>
-                       
                 </div>
                 <div class="list-group-item">
                     <div class="media">
@@ -201,14 +207,10 @@
                                 <td class="hidden-xs hidden-sm">
                                     <asp:HyperLink ID="HyperLinkUserName" CssClass="text-capitalize " runat="server" NavigateUrl='<%# "~/user/" + Eval("RoutUserName")%>'><%# Eval("Username")%></asp:HyperLink><br>
                                     <small class="text-nowrap "><i class="fa fa-clock-o"></i>
-                                        <asp:Label ID="NotificationDateLabel" runat="server" Text='<%# Eval("PostDate")%>' /></small>
-
+                                        <asp:Label ID="NotificationDateLabel" runat="server" Text='<%# Eval("PostDate")%>' />
+                                    </small>
                                 </td>
                             </tr>
-
-
-
-
                         </ItemTemplate>
                         <LayoutTemplate>
                             <div class="table-responsive ">

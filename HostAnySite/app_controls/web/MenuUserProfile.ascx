@@ -44,7 +44,9 @@
     End Property
 
     Protected Sub Page_PreRender(sender As Object, e As EventArgs)
-
+        If RoutUserName.ToLower <> Trim(Session("routuserName")).ToLower Then
+            HyperLinkMessage.NavigateUrl = "~/message/" & RoutUserName
+        End If
     End Sub
 
 </script>
@@ -62,9 +64,9 @@
             <a class="pull-left visible-xs" style="padding: 10px">
                 <asp:Image ID="ImageUserImage" runat="server" Height="30" />
             </a>
-            <span class="visible-xs navbar-brand">
-                <asp:HyperLink ID="HyperLinkUserName" CssClass=" text-capitalize " runat="server"></asp:HyperLink>
-            </span>
+
+                <asp:HyperLink ID="HyperLinkUserName" CssClass=" text-capitalize visible-xs navbar-brand" runat="server"></asp:HyperLink>
+
         </div>
         <div class="navbar-collapse collapse" id="FC-sidebar-navbar-collapse" style="padding: 0px;">
             <div class="list-group" style="margin: 0px;">
@@ -73,7 +75,7 @@
                 </div>
                 <asp:HyperLink ID="HyperLinkuserName2" cssclass="list-group-item hidden-xs text-capitalize" runat="server" Font-Bold="True"></asp:HyperLink>
 
-                <asp:HyperLink ID="HyperLink1" CssClass="list-group-item" runat="server" NavigateUrl="~/dashboard/message/"><i class="fa fa-envelope-o" aria-hidden="true"></i>&nbsp;Message</asp:HyperLink>
+                <asp:HyperLink ID="HyperLinkMessage" CssClass="list-group-item" runat="server" NavigateUrl="~/dashboard/message/"><i class="fa fa-envelope-o" aria-hidden="true"></i>&nbsp;Message</asp:HyperLink>
 
                 <a href="#GroupFollower" class="list-group-item Change-DropDown-Icon" data-toggle="collapse"><i class="fa fa-users" aria-hidden="true"></i>&nbsp;Follower<i class="glyphicon glyphicon-chevron-right pull-right"></i></a>
                 <div class="collapse" id="GroupFollower" style="padding-left: 10px;">

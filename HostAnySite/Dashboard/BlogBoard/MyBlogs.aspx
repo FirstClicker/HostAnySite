@@ -8,46 +8,46 @@
 
 </script>
 
-<asp:Content ID="Content1" ContentPlaceHolderID="head" Runat="Server">
+<asp:Content ID="Content1" ContentPlaceHolderID="head" runat="Server">
 </asp:Content>
-<asp:Content ID="Content2" ContentPlaceHolderID="ContentPlaceHolder1" Runat="Server">
-      <uc1:ValidateUserAccess runat="server" ID="ValidateUserAccess" />
+<asp:Content ID="Content2" ContentPlaceHolderID="ContentPlaceHolder1" runat="Server">
+    <uc1:ValidateUserAccess runat="server" ID="ValidateUserAccess" />
     <div class="row">
-        <div class="col-md-3">
-            <uc1:NavigationSideDashboard runat="server" ID="NavigationSideDashboard" />
-        </div>
-        <div class="col-lg-9">
-                    <div class="panel panel-default">
+        <div class="col-md-3 col-sm-3">
+        <uc1:NavigationSideDashboard runat="server" ID="NavigationSideDashboard" />
+    </div>
+     <div class="col-md-9 col-sm-9">
+            <div class="panel panel-default">
                 <div class="panel-heading clearfix ">
                     <h1 class="panel-title">Blog List</h1>
                 </div>
-              
-                    <asp:ListView ID="ListViewUserDetails" runat="server" DataSourceID="SqlDataSourceUserlist" DataKeyNames="Blogid">
-                        <EmptyDataTemplate>
-                            <span>No blog found.</span>
-                        </EmptyDataTemplate>
-                        <ItemTemplate>
-                            <uc1:BlogManageViewInListView runat="server" ID="BlogManageViewInListView" Heading ='<%# Eval("Heading") %>' BlogId ='<%# Eval("BlogId") %>' UserId ='<%# Eval("UserId") %>' ShowinHome ='<%# Eval("ShowinHome") %>' />
-                        </ItemTemplate>
-                        <LayoutTemplate>
-                            <div class="list-group " id="itemPlaceholderContainer" runat="server">
-                                <div runat="server" id="itemPlaceholder" />
-                            </div>
-                        </LayoutTemplate>
-                    </asp:ListView>
-                    <asp:SqlDataSource runat="server" ID="SqlDataSourceUserlist"
-                        ConnectionString='<%$ ConnectionStrings:AppConnectionString %>'
-                        SelectCommand="SELECT * FROM [Table_Blog]
+
+                <asp:ListView ID="ListViewUserDetails" runat="server" DataSourceID="SqlDataSourceUserlist" DataKeyNames="Blogid">
+                    <EmptyDataTemplate>
+                           <div class="list-group ">
+                        <div class="list-group-item">No blog found.</div></div> 
+                    </EmptyDataTemplate>
+                    <ItemTemplate>
+                        <uc1:BlogManageViewInListView runat="server" ID="BlogManageViewInListView" Heading='<%# Eval("Heading") %>' BlogId='<%# Eval("BlogId") %>' UserId='<%# Eval("UserId") %>' ShowinHome='<%# Eval("ShowinHome") %>' />
+                    </ItemTemplate>
+                    <LayoutTemplate>
+                        <div class="list-group " id="itemPlaceholderContainer" runat="server">
+                            <div runat="server" id="itemPlaceholder" />
+                        </div>
+                    </LayoutTemplate>
+                </asp:ListView>
+                <asp:SqlDataSource runat="server" ID="SqlDataSourceUserlist"
+                    ConnectionString='<%$ ConnectionStrings:AppConnectionString %>'
+                    SelectCommand="SELECT * FROM [Table_Blog]
                         where userid=@UserId
-                         ORDER BY [PostDate] DESC"
-                        >
-                         <SelectParameters>
+                         ORDER BY [PostDate] DESC">
+                    <SelectParameters>
                         <asp:SessionParameter SessionField="UserId" Name="UserId" Type="Decimal"></asp:SessionParameter>
                     </SelectParameters>
-                       
-                    </asp:SqlDataSource>
-              
-                <div class="panel-footer clearfix" >
+
+                </asp:SqlDataSource>
+
+                <div class="panel-footer clearfix">
                     <div class="pull-right ">
                         <asp:DataPager ID="DataPager1" runat="server" PagedControlID="ListViewUserDetails">
                             <Fields>
@@ -57,6 +57,7 @@
                     </div>
                 </div>
             </div>
-        </div> </div> 
+        </div>
+    </div>
 </asp:Content>
 

@@ -31,7 +31,9 @@
                 </div>
                     <asp:ListView ID="ListViewUserDetails" runat="server" DataSourceID="SqlDataSourceUserlist" DataKeyNames="Blogid">
                         <EmptyDataTemplate>
-                            <span>No blog found.</span>
+                            <div class="list-group ">
+                                <div class="list-group-item">No blog found.</div>
+                            </div>
                         </EmptyDataTemplate>
                         <ItemTemplate>
                             <uc1:BlogManageViewInListView runat="server" ID="BlogManageViewInListView" Heading ='<%# Eval("Heading") %>' BlogId ='<%# Eval("BlogId") %>' UserId ='<%# Eval("UserId") %>' ShowinHome ='<%# Eval("ShowinHome") %>' />
