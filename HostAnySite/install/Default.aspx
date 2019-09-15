@@ -1,7 +1,7 @@
 ﻿<%@ Page Language="VB" %>
 
 <%@ Import Namespace="System.Data.SqlClient" %>
-<%@ Implements Interface="ClassHostAnySite.RoutSiteHomeInterface" %>
+<%@ Implements Interface="RoutSiteHomeInterface" %>
 <!DOCTYPE html>
 
 <script runat="server">
@@ -10,7 +10,7 @@
     Protected Sub Page_Load(sender As Object, e As EventArgs)
 
         If IsPostBack = False Then
-            If IO.File.Exists(Server.MapPath("~/install/install.txt")) = True Then
+            If IO.File.Exists(Server.MapPath("~/App_Data/AppConnectionString.txt")) = True Then
                 PanelPreInstall.Visible = True
             Else
                 PanelPreInstall.Visible = False
@@ -24,7 +24,7 @@
     End Sub
 
     Protected Sub ButtonRestartInstallation_Click(sender As Object, e As EventArgs)
-        If IO.File.Exists(Server.MapPath("~/install/install.txt")) = False Then
+        If IO.File.Exists(Server.MapPath("~/App_Data/AppConnectionString.txt")) = False Then
             System.Web.HttpRuntime.UnloadAppDomain()
             Response.Redirect(Page.Request.Url.ToString)
         Else
@@ -362,8 +362,6 @@
         End Using
 
 
-
-
         ' creating table
         tempstring = ""
         tempstring = My.Computer.FileSystem.ReadAllText(Server.MapPath("~/install/dbscript/createdatabase.sql"))
@@ -397,7 +395,7 @@
 
 
         Dim CSDBcheck As String = "Server=" & TextBoxServerPath.Text & ";Database=" & TextBoxDBname.Text & ";Uid=" & TextBoxDBUserName.Text & ";Password=" & TextBoxDbUserPassword.Text
-        My.Computer.FileSystem.WriteAllText(Server.MapPath("~/install/install.txt"), CSDBcheck, False)
+        My.Computer.FileSystem.WriteAllText(Server.MapPath("~/App_Data/AppConnectionString.txt"), CSDBcheck, False)
 
         ListBoxExecuteResult.Items.Add("Connecting string saved in settings.")
 
@@ -415,9 +413,28 @@
             ListBoxExecuteResult.Items.Add("Failed to save connecting string in 'Web.Config' : " & ex.Message)
         End Try
 
+        'CREATE SYSTEM USER
+        Dim myConn3 As SqlConnection
+        Dim myCmd3 As SqlCommand
+        Dim myReader3 As SqlDataReader
 
-        Dim createuser As ClassHostAnySite.User.StructureUser
-        createuser = ClassHostAnySite.User.Create_User(TextBoxWEBUser.Text, TextBoxWEBuserPass.Text, ClassHostAnySite.User.UserType.Administrator, TextBoxWEBuserEmail.Text, CSDBcheck)
+        myConn3 = New SqlConnection(CSDBcheck)
+        myCmd3 = myConn3.CreateCommand
+        myCmd3.CommandText = "insert into table_user (UserID, UserName, Routusername, Password, UserType, Email, EmailVcode, JoinDate, LastLogInDate) values('11111111', N'Sys_User', N'Sys_User', '" & FirstClickerService.Common.GetRandomNumber(11111111, 99999999) & "','" & FirstClickerService.Version1.User.UserType.Administrator.ToString & "', 'email@email.com', '" & FirstClickerService.Common.GetRandomNumber("10000000", "99999999") & "', '" & Now.ToString("yyyy-MM-ddTHH:mm:ss") & "', '" & Now.ToString("yyyy-MM-ddTHH:mm:ss") & "')"
+
+        Try
+            myConn3.Open()
+            myReader3 = myCmd3.ExecuteReader
+
+            myReader3.Close()
+            myConn3.Close()
+        Catch ex As Exception
+
+        End Try
+        'CREATE SYSTEM USER
+
+        Dim createuser As FirstClickerService.Version1.User.StructureUser
+        createuser = FirstClickerService.Version1.User.Create_User(TextBoxWEBUser.Text, TextBoxWEBuserPass.Text, FirstClickerService.Version1.User.UserType.Administrator, TextBoxWEBuserEmail.Text, CSDBcheck)
 
         If createuser.Result = True Then
             Session("UserName") = createuser.UserName
@@ -456,15 +473,17 @@
 <head runat="server">
     <title></title>
 
-    <meta charset="utf-8" />
-    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
+      <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
 
     <!-- Bootstrap -->
-    <link href="../Content/bootstrap.min.css" rel="stylesheet" />
-    <link href="../Content/bootstrap-theme.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="/Content/bootstrap.min.css" />
+    <link rel="stylesheet" id="CurrentThemeLink" runat="server" />
+
+    <link rel="stylesheet" href="/Content/fontawesome-all.min.css" />
+
     <!-- Custom styles for this template -->
-    <link href="../Content/custom.css" rel="stylesheet" />
+    <link rel="stylesheet" href="/Content/custom.css" />
 
     <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
     <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
@@ -476,25 +495,31 @@
 </head>
 <body>
 
-    <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
-    <script src='<%= ResolveUrl("~/Scripts/jquery-3.1.1.min")%>'></script>
-    <!-- Include all compiled plugins (below), or include individual files as needed -->
-    <script src='<%= ResolveUrl("~/Scripts/bootstrap.min.js")%>'></script>
-    <script src='<%= ResolveUrl("~/Scripts/custom.js")%>'></script>
+   
 
     <form id="form1" runat="server">
-        <asp:ScriptManager ID="ScriptManager1" runat="server"></asp:ScriptManager>
-        <nav class="navbar navbar-default navbar-static-top">
+       <asp:ScriptManager ID="ScriptManagerGlobal" runat="server">
+        <CompositeScript>
+            <Scripts>
+                <asp:ScriptReference Path="~/Scripts/jquery-3.4.1.slim.min.js"></asp:ScriptReference>
+                <asp:ScriptReference Path="~/Scripts/umd/popper.min.js"></asp:ScriptReference>
+                <asp:ScriptReference Path="~/Scripts/bootstrap.min.js"></asp:ScriptReference>
+                <asp:ScriptReference Path="~/Scripts/custom.js"></asp:ScriptReference>
+            </Scripts>
+        </CompositeScript>
+    </asp:ScriptManager>
+       <nav class="navbar navbar-expand-lg navbar-dark bg-primary mb-2 border">
             <div class="container">
-                <div class="navbar-header">
-                    <div class="navbar-toggle" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1">
-                        <span class="sr-only">Toggle navigation</span>
-                        <span class="icon-bar"></span>
-                        <span class="icon-bar"></span>
-                        <span class="icon-bar"></span>
-                    </div>
-                    <asp:HyperLink ID="HyperLinkHome" runat="server" CssClass="navbar-brand" NavigateUrl="~/">HostAnySite Installation</asp:HyperLink>
+                <!-- Brand and toggle get grouped for better mobile display -->
+
+                <div class="navbar-brand nav-link">
+                   
+                    <asp:HyperLink ID="HyperLink1" CssClass="text-white" runat="server" NavigateUrl="~/"> HostAnySite Installation</asp:HyperLink>
                 </div>
+
+               
+
+           
             </div>
         </nav>
         <div class="container">

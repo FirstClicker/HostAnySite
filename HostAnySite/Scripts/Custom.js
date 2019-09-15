@@ -1,7 +1,9 @@
 ﻿$(function () {
     $('.Change-DropDown-Icon').on('click', function () {
-        $('.glyphicon', this)
-          .toggleClass('glyphicon-chevron-right')
-          .toggleClass('glyphicon-chevron-down');
+        $('.fa', this)
+            .toggleClass('fa-chevron-circle-up')
+            .toggleClass('fa-chevron-circle-down');
     });
 });
+
+ 

@@ -5,9 +5,9 @@
     Protected Sub Page_Load(sender As Object, e As EventArgs)
         Session("UserName") = ""
         Session("RoutUserName") = ""
-        Session("UserID") = "0"
+        Session("UserID") = ""
         Session("UserType") = ""
-        
+
         Dim myCookie As HttpCookie
         myCookie = New HttpCookie("HASApp")
         myCookie.Expires = DateTime.Now.AddDays(-7D)
@@ -15,7 +15,7 @@
         myCookie.Item("UserID") = ""
         myCookie.Item("UserType") = ""
         Response.Cookies.Add(myCookie)
-       
+
         Response.Redirect("~/")
     End Sub
 </script>

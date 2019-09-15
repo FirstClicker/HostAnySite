@@ -1,19 +1,48 @@
-/* Sticky footer styles
--------------------------------------------------- */
+﻿/* version 24/01/2019 # 3.42 PM */
+
 html {
     position: relative;
     min-height: 100%;
-    min-width:350px; /* suppose you want minimun width of 1000px */
-    width: auto !important;  /* Firefox will set width as auto */
-    width:350px;  
+    min-width: 350px; /* suppose you want minimun width of 1000px */
+    width: auto !important; /* Firefox will set width as auto */
+    width: 350px;
+}
+
+
+.ResponsiveFont {
+    font-size: 1rem;
+}
+
+@media (min-width: 576px) {
+    .ResponsiveFont {
+        font-size: 1.5rem;
+    }
+}
+
+@media (min-width: 768px) {
+    .ResponsiveFont {
+        font-size: 1.65rem;
+    }
+}
+
+@media (min-width: 992px) {
+    .ResponsiveFont {
+        font-size: 1.80rem;
+    }
+}
+
+@media (min-width: 1200px) {
+    .ResponsiveFont {
+        font-size: 2rem;
+    }
 }
 
 body {
     /* Margin bottom by footer height */
-   margin-bottom: 70px;
-   min-width:350px; /* suppose you want minimun width of 1000px */
-   width: auto !important;  /* Firefox will set width as auto */
-   width:350px;  
+    margin-bottom: 70px;
+    min-width: 350px; /* suppose you want minimun width of 1000px */
+    width: auto !important; /* Firefox will set width as auto */
+    width: 350px;
 }
 
 .footer {
@@ -27,26 +56,26 @@ body {
     overflow: hidden;
 }
 
-.Change-DropDown-Icon
-{
-      /* Used to triger js script */
+
+
+
+.Change-DropDown-Icon {
+    /* Used to triger js script */
 }
 
-.squareCorners {
-    -webkit-border-radius: 0 !important;
-    -moz-border-radius: 0 !important;
-    border-radius: 0 !important;
+
+.imgFitinDiv {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translateX(-50%) translateY(-50%);
+    max-width: 100%;
+    max-height: 100%;
 }
 
-.no-margin{
-    margin :0px;
-}
 
-.no-padding{
-    padding  :0px;
-}
 
-/* Ajax Rating Control */
+/*#region Ajax Rating Control */
 .ratingStar {
     font-size: 0pt;
     width: 18px;
@@ -59,70 +88,269 @@ body {
 }
 
 .filledRatingStar {
-    background-image: url(Images/RatingStarFilled.png);
-
+    background-image: url(Image/RatingStarFilled.png);
 }
 
 .emptyRatingStar {
-    background-image: url(Images/RatingStarEmpty.png);
+    background-image: url(Image/RatingStarEmpty.png);
 }
 
 .savedRatingStar {
-    background-image: url(Images/RatingStarSaved.png);
+    background-image: url(Image/RatingStarSaved.png);
 }
-/* Ajax Rating Control */
+/*#endregion*/
 
 
-/* stylish-panel Control */
-.stylish-panel {
-    padding: 20px 0;
-    text-align: center;
-}
-.stylish-panel > div > div{
-    padding: 10px;
-    border: 1px solid transparent;
-    border-radius: 4px;
-    transition: 0.2s;
-}
-.stylish-panel > div:hover > div{
-    margin-top: -10px;
-    border: 1px solid rgb(200, 200, 200);
-    box-shadow: rgba(0, 0, 0, 0.1) 0px 5px 5px 2px;
-    background: rgba(200, 200, 200, 0.1);
-    transition: 0.5s;
+/*#region BoxEffect */
+/*==================================================
+ * BoxEffect 1
+ * ===============================================*/
+.BoxEffect1 {
+    -webkit-box-shadow: 0 10px 6px -6px #777;
+    -moz-box-shadow: 0 10px 6px -6px #777;
+    box-shadow: 0 10px 6px -6px #777;
 }
 
-.stylish-panel > div:hover img {
-    border-radius: 50%;
-    -webkit-transform: rotate(360deg);
-    -moz-transform: rotate(360deg);
-    -o-transform: rotate(360deg);
-    -ms-transform: rotate(360deg);
-    transform: rotate(360deg);
+/*==================================================
+ * Effect 2
+ * ===============================================*/
+.BoxEffect2 {
+    min-height: 100px;
+    position: relative;
 }
-/* stylish-panel Control */
+
+    .BoxEffect2:before, .BoxEffect2:after {
+        z-index: -1;
+        position: absolute;
+        content: "";
+        bottom: 15px;
+        left: 10px;
+        width: 50%;
+        top: 80%;
+        max-width: 300px;
+        background: #777;
+        -webkit-box-shadow: 0 15px 10px #777;
+        -moz-box-shadow: 0 15px 10px #777;
+        box-shadow: 0 15px 10px #777;
+        -webkit-transform: rotate(-3deg);
+        -moz-transform: rotate(-3deg);
+        -o-transform: rotate(-3deg);
+        -ms-transform: rotate(-3deg);
+        transform: rotate(-3deg);
+    }
+
+    .BoxEffect2:after {
+        -webkit-transform: rotate(3deg);
+        -moz-transform: rotate(3deg);
+        -o-transform: rotate(3deg);
+        -ms-transform: rotate(3deg);
+        transform: rotate(3deg);
+        right: 10px;
+        left: auto;
+    }
 
 
-/* make sidebar nav vertical */ 
-	@media (min-width: 768px) {
-	  .sidebar-nav .navbar .navbar-collapse {
-		padding: 0;
-		max-height: none;
-	  }
-	  .sidebar-nav .navbar ul {
-		float: none;
-	  }
-	  .sidebar-nav .navbar ul:not {
-		display: block;
+/*==================================================
+ * BoxEffect 3
+ * ===============================================*/
+.BoxEffect3 {
+    min-height: 100px;
+    position: relative;
+}
 
-	  }
-	  .sidebar-nav .navbar li {
-		float: none;
-		display: block;
-	  }
-	  .sidebar-nav .navbar li a {
-		padding-top: 12px;
-		padding-bottom: 12px;
-	  }
-	}
-/* make sidebar nav vertical */ 
+    .BoxEffect3:before {
+        z-index: -1;
+        position: absolute;
+        content: "";
+        bottom: 15px;
+        left: 10px;
+        width: 50%;
+        top: 80%;
+        max-width: 300px;
+        background: #777;
+        -webkit-box-shadow: 0 15px 10px #777;
+        -moz-box-shadow: 0 15px 10px #777;
+        box-shadow: 0 15px 10px #777;
+        -webkit-transform: rotate(-3deg);
+        -moz-transform: rotate(-3deg);
+        -o-transform: rotate(-3deg);
+        -ms-transform: rotate(-3deg);
+        transform: rotate(-3deg);
+    }
+
+/*==================================================
+ * BoxEffect 4
+ * ===============================================*/
+.BoxEffect4 {
+    min-height: 100px;
+    position: relative;
+}
+
+    .BoxEffect4:after {
+        z-index: -1;
+        position: absolute;
+        content: "";
+        bottom: 15px;
+        right: 10px;
+        left: auto;
+        width: 50%;
+        top: 80%;
+        max-width: 300px;
+        background: #777;
+        -webkit-box-shadow: 0 15px 10px #777;
+        -moz-box-shadow: 0 15px 10px #777;
+        box-shadow: 0 15px 10px #777;
+        -webkit-transform: rotate(3deg);
+        -moz-transform: rotate(3deg);
+        -o-transform: rotate(3deg);
+        -ms-transform: rotate(3deg);
+        transform: rotate(3deg);
+    }
+
+/*==================================================
+ * BoxEffect 5
+ * ===============================================*/
+.BoxEffect5 {
+    min-height: 150px;
+    position: relative;
+}
+
+    .BoxEffect5:before, .BoxEffect5:after {
+        z-index: -1;
+        position: absolute;
+        content: "";
+        bottom: 25px;
+        left: 10px;
+        width: 50%;
+        top: 80%;
+        max-width: 100px;
+        background: #777;
+        -webkit-box-shadow: 0 35px 20px #777;
+        -moz-box-shadow: 0 35px 20px #777;
+        box-shadow: 0 35px 20px #777;
+        -webkit-transform: rotate(-8deg);
+        -moz-transform: rotate(-8deg);
+        -o-transform: rotate(-8deg);
+        -ms-transform: rotate(-8deg);
+        transform: rotate(-8deg);
+    }
+
+    .BoxEffect5:after {
+        -webkit-transform: rotate(8deg);
+        -moz-transform: rotate(8deg);
+        -o-transform: rotate(8deg);
+        -ms-transform: rotate(8deg);
+        transform: rotate(8deg);
+        right: 10px;
+        left: auto;
+    }
+
+
+/*==================================================
+ * BoxEffect 6
+ * ===============================================*/
+.BoxEffect6 {
+    position: relative;
+    -webkit-box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3), 0 0 40px rgba(0, 0, 0, 0.1) inset;
+    -moz-box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3), 0 0 40px rgba(0, 0, 0, 0.1) inset;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3), 0 0 40px rgba(0, 0, 0, 0.1) inset;
+}
+
+    .BoxEffect6:before, .BoxEffect6:after {
+        content: "";
+        position: absolute;
+        z-index: -1;
+        -webkit-box-shadow: 0 0 20px rgba(0,0,0,0.8);
+        -moz-box-shadow: 0 0 20px rgba(0,0,0,0.8);
+        box-shadow: 0 0 20px rgba(0,0,0,0.8);
+        top: 50%;
+        bottom: 0;
+        left: 10px;
+        right: 10px;
+        -moz-border-radius: 100px / 10px;
+        border-radius: 100px / 10px;
+    }
+
+    .BoxEffect6:after {
+        right: 10px;
+        left: auto;
+        -webkit-transform: skew(8deg) rotate(3deg);
+        -moz-transform: skew(8deg) rotate(3deg);
+        -ms-transform: skew(8deg) rotate(3deg);
+        -o-transform: skew(8deg) rotate(3deg);
+        transform: skew(8deg) rotate(3deg);
+    }
+
+/*==================================================
+ * BoxEffect 7
+ * ===============================================*/
+.BoxEffect7 {
+    position: relative;
+    -webkit-box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3), 0 0 40px rgba(0, 0, 0, 0.1) inset;
+    -moz-box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3), 0 0 40px rgba(0, 0, 0, 0.1) inset;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3), 0 0 40px rgba(0, 0, 0, 0.1) inset;
+}
+
+    .BoxEffect7:before, .BoxEffect7:after {
+        content: "";
+        position: absolute;
+        z-index: -1;
+        -webkit-box-shadow: 0 0 20px rgba(0,0,0,0.8);
+        -moz-box-shadow: 0 0 20px rgba(0,0,0,0.8);
+        box-shadow: 0 0 20px rgba(0,0,0,0.8);
+        top: 0;
+        bottom: 0;
+        left: 10px;
+        right: 10px;
+        -moz-border-radius: 100px / 10px;
+        border-radius: 100px / 10px;
+    }
+
+    .BoxEffect7:after {
+        right: 10px;
+        left: auto;
+        -webkit-transform: skew(8deg) rotate(3deg);
+        -moz-transform: skew(8deg) rotate(3deg);
+        -ms-transform: skew(8deg) rotate(3deg);
+        -o-transform: skew(8deg) rotate(3deg);
+        transform: skew(8deg) rotate(3deg);
+    }
+
+/*==================================================
+ * BoxEffect 8
+ * ===============================================*/
+.BoxEffect8 {
+    position: relative;
+    -webkit-box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3), 0 0 40px rgba(0, 0, 0, 0.1) inset;
+    -moz-box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3), 0 0 40px rgba(0, 0, 0, 0.1) inset;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3), 0 0 40px rgba(0, 0, 0, 0.1) inset;
+}
+
+    .BoxEffect8:before, .BoxEffect8:after {
+        content: "";
+        position: absolute;
+        z-index: -1;
+        -webkit-box-shadow: 0 0 20px rgba(0,0,0,0.8);
+        -moz-box-shadow: 0 0 20px rgba(0,0,0,0.8);
+        box-shadow: 0 0 20px rgba(0,0,0,0.8);
+        top: 10px;
+        bottom: 10px;
+        left: 0;
+        right: 0;
+        -moz-border-radius: 100px / 10px;
+        border-radius: 100px / 10px;
+    }
+
+    .BoxEffect8:after {
+        right: 10px;
+        left: auto;
+        -webkit-transform: skew(8deg) rotate(3deg);
+        -moz-transform: skew(8deg) rotate(3deg);
+        -ms-transform: skew(8deg) rotate(3deg);
+        -o-transform: skew(8deg) rotate(3deg);
+        transform: skew(8deg) rotate(3deg);
+    }
+/*#endregion*/
+
+
+

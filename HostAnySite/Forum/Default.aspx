@@ -1,84 +1,126 @@
-﻿<%@ Page Title="" Language="VB" MasterPageFile="~/default.master" %>
+﻿<%@ Page Title="" Language="VB" MasterPageFile="~/Default.master" %>
+<%@ Implements Interface ="RoutSiteHomeInterface"  %>
 
-<%@ Import Namespace="ClassHostAnySite" %>
-<%@ Register Src="~/app_controls/web/NavigationSideMain.ascx" TagPrefix="uc1" TagName="NavigationSideMain" %>
+<%@ Register Src="~/App_Controls/TagOfAllForums.ascx" TagPrefix="uc1" TagName="TagOfAllForums" %>
+<%@ Register Src="~/App_Controls/PagingControl.ascx" TagPrefix="uc1" TagName="PagingControl" %>
+<%@ Register Src="~/App_Controls/AdsenseAds.ascx" TagPrefix="uc1" TagName="AdsenseAds" %>
+
+
 
 
 <script runat="server">
+    ' version 14/08/2018 # 1.27 AM
 
-    Protected Sub ButtonPostForum_Click(sender As Object, e As EventArgs)
-        Dim createforum As Forum.StructureForum
-        createforum = Forum.Create_Forum(TextBoxHeading.Text, TextBoxDrescption.Text, "0", Session("UserID"), Forum.ForumVisibleToEnum.EveryOne, ClassAppDetails.DBCS)
-        If createforum.Result = True Then
-            Dim newForumURL As String = "~/forum/" & createforum.Forum_Id & "/" & ClassHostAnySite.HostAnySite.ConvertSpace2Dass(createforum.Heading)
-            If CheckBoxPostToMyWall.Checked = True Then
-                'post to userwall
-                Dim submituserwall2 As ClassHostAnySite.UserWall.StructureUserWall
-                submituserwall2 = ClassHostAnySite.UserWall.UserWall_Add(" ", "A new Forum posted", 0, Session("userId"), Session("userid"), 0, 0, "active", ClassAppDetails.DBCS, ClassHostAnySite.UserWall.PreviewTypeEnum.MediaView, TextBoxHeading.Text.Replace("'", "''"), newForumURL.Replace("'", "''"), Mid(TextBoxDrescption.Text, 1, 500).Replace("'", "''"))
-            End If
-            Response.Redirect(newForumURL)
-        Else
-            LabelEM.Text = createforum.My_Error_message
-        End If
-    End Sub
 
     Protected Sub Page_Load(sender As Object, e As EventArgs)
+
         If IsPostBack = False Then
+
+            PagingControl.CurrentPage = 1
+            PagingControl.BaseURL = "~/Forum/"
+
         End If
+
+        Dim pageinfo As FirstClickerService.Version1.StaticPage.StructureStaticPage
+        pageinfo = FirstClickerService.Version1.StaticPage.StaticPage_Get(FirstClickerService.Version1.StaticPage.PageNameList.Site_Forum_Default, WebAppSettings.DBCS)
+
+        PanelPagebody.Controls.Add(New LiteralControl(pageinfo.PageBody))
+        ' as dinamic LiteralControl used in above, need to load on every post back 
+
+        HyperLinkHeading.Text = pageinfo.Title
+
+        Dim mytitle As String
+        Dim myDescription As String
+
+        mytitle = pageinfo.Title
+        myDescription = Page.MetaDescription
+
+
+        Title = mytitle
+        MetaDescription = myDescription
+
+
+
     End Sub
 
+    Protected Sub SqlDataSourcePubicForum_Selected(sender As Object, e As SqlDataSourceStatusEventArgs)
+        PagingControl.LastPage = CInt(e.AffectedRows / DataPagerForom.PageSize)
+        If e.AffectedRows > Val(PagingControl.LastPage) * DataPagerForom.PageSize Then
+            PagingControl.LastPage = Val(PagingControl.LastPage) + 1
+        End If
+
+        If e.AffectedRows <= DataPagerForom.PageSize Then
+            panelfooter.Visible = False
+        End If
+    End Sub
 </script>
 
-<asp:Content ID="Content1" ContentPlaceHolderID="head" runat="Server">
+<asp:Content ID="Content1" ContentPlaceHolderID="head" Runat="Server">
 </asp:Content>
-<asp:Content ID="Content2" ContentPlaceHolderID="ContentPlaceHolder1" runat="Server">
-    <div class="row">
-        <div class="col-lg-8 col-md-8">
-            <div class="panel panel-default">
-                <asp:ListView ID="ListViewPublicForom" runat="server" DataSourceID="SqlDataSourcePubicForum" DataKeyNames="Forum_Id">
+<asp:Content ID="Content2" ContentPlaceHolderID="ContentPlaceHolder1" Runat="Server">
+     <div class="row">
+        <div class="col-12 col-sm-12 col-md-12 col-lg-8 col-xl-8">
+            <uc1:AdsenseAds runat="server" ID="AdsenseAds" Adsformat="horizontal" />
+
+            <div class="card BoxEffect6 mt-2">
+                <div class="card-header p-2 clearfix">
+                    <div class="float-right">
+                        <asp:HyperLink ID="HyperLink2" NavigateUrl="~/Dashboard/Forum/Create.aspx" CssClass="btn btn-sm btn-info" role="button" runat="server">Create Forum</asp:HyperLink>
+                    </div>
+                    <h5 class="card-title m-0 ">
+                        <i class="fab fa-foursquare"></i>&nbsp;<asp:HyperLink ID="HyperLinkHeading" runat="server" NavigateUrl="~/Forum/">Forum</asp:HyperLink>
+                    </h5>
+                </div>
+            </div>
+            <div class="card-body">
+                <asp:ListView ID="ListViewPublicForom" runat="server" DataSourceID="SqlDataSourcePubicForum" DataKeyNames="ForumId">
                     <EmptyDataTemplate>
                         <div class="table-responsive ">
                             <table runat="server" class="table">
                                 <thead>
                                     <tr runat="server">
                                         <th runat="server" class="text-left ">Forum Heading</th>
-                                        <th runat="server" class="text-center hidden-xs hidden-sm">Topics</th>
-                                        <th runat="server" class="text-center hidden-xs hidden-sm">Posts</th>
-                                        <th runat="server" class="hidden-xs hidden-sm">Create On</th>
+                                        <th runat="server" class="text-center">Topics</th>
+                                        <th runat="server" class="text-center">Posts</th>
+                                        <th runat="server" class="d-none d-md-block">Create On</th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    <tr runat="server" >
+                                    <tr runat="server">
                                         <td>No forum found.</td>
-                                         <td></td>
-                                         <td></td>
-                                         <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td class="d-none d-md-block"></td>
                                     </tr>
                                 </tbody>
                             </table>
                         </div>
-                       
                     </EmptyDataTemplate>
                     <ItemTemplate>
                         <tr>
                             <td class="text-left ">
-                                <h4>
-                                    <asp:HyperLink Text='<%# Eval("Heading") %>' CssClass=" text-capitalize " NavigateUrl='<%#"~/forum/" & Eval("Forum_Id") & "/" & ClassHostAnySite.HostAnySite.ConvertSpace2Dass(Eval("Heading"))%>' runat="server" ID="HeadingLabel" /><br>
-                                    <small>
-                                        <asp:Label Text='<%# Eval("Drescption") %>' CssClass=" text-capitalize " runat="server" ID="DrescptionLabel" />
-                                    </small>
+                                 <h4 class="text-primary">
+                                    <asp:HyperLink Text='<%# Eval("Heading") %>' CssClass=" text-capitalize " NavigateUrl='<%#"~/forum/" & FirstClickerService.Common.ConvertSpace2Dass(Eval("Heading")) & "/" & Eval("ForumId") %>' runat="server" ID="HeadingLabel" /><br>
                                 </h4>
+                                <p>
+                                    <asp:Label Text='<%# Eval("Drescption") %>' CssClass=" text-capitalize " runat="server" ID="DrescptionLabel" />
+                                </p> 
+                                <div class="d-md-none">
+                                    <asp:HyperLink ID="HyperLink1" CssClass=" text-capitalize " runat="server" NavigateUrl='<%# "~/user/" + Eval("RoutUserName")%>'><%# Eval("Username")%></asp:HyperLink><br>
+                                    <small class="text-nowrap "><i class="fa fa-clock-o"></i>
+                                        <asp:Label ID="Label1" runat="server" Text='<%# FirstClickerService.Common.ConvertDateTime4Use(Eval("CreateDate")) %>' /></small>
+                                </div>
                             </td>
-                            <td class="text-center hidden-xs hidden-sm">
-                                <asp:Label ID="LabelTC" runat="server" cssclass="label label-success" Text='<%# Eval("TopicCount") %>' />
+                            <td class="text-center">
+                                <asp:Label ID="LabelTC" runat="server" CssClass="label label-success" Text='<%# Eval("TopicCount") %>' />
                             </td>
-                            <td class="text-center hidden-xs hidden-sm">
-                                <asp:Label ID="LabelTRC" runat="server" cssclass="label label-info" Text='<%# Eval("TopicReplyCount") %>' />
+                            <td class="text-center">
+                                <asp:Label ID="LabelTRC" runat="server" CssClass="label label-info" Text='<%# Eval("TopicReplyCount") %>' />
                             </td>
-                            <td class="hidden-xs hidden-sm">
+                            <td class="d-none d-md-block">
                                 <asp:HyperLink ID="HyperLinkUserName" CssClass=" text-capitalize " runat="server" NavigateUrl='<%# "~/user/" + Eval("RoutUserName")%>'><%# Eval("Username")%></asp:HyperLink><br>
                                 <small class="text-nowrap "><i class="fa fa-clock-o"></i>
-                                <asp:Label ID="NotificationDateLabel" runat="server" Text='<%# Eval("CreateDate")%>' /></small>
+                                    <asp:Label ID="NotificationDateLabel" runat="server" Text='<%# FirstClickerService.Common.ConvertDateTime4Use(Eval("CreateDate")) %>' /></small>
                             </td>
                         </tr>
                     </ItemTemplate>
@@ -88,9 +130,9 @@
                                 <thead>
                                     <tr runat="server">
                                         <th runat="server" class="text-left ">Forum Heading</th>
-                                        <th runat="server" class="text-center hidden-xs hidden-sm">Topics</th>
-                                        <th runat="server" class="text-center hidden-xs hidden-sm">Posts</th>
-                                        <th runat="server" class="hidden-xs hidden-sm">Create On</th>
+                                        <th runat="server" class="text-center">Topics</th>
+                                        <th runat="server" class="text-center">Posts</th>
+                                        <th runat="server" class="d-none d-md-block">Create On</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -100,55 +142,37 @@
                         </div>
                     </LayoutTemplate>
                 </asp:ListView>
-                <asp:SqlDataSource runat="server" ID="SqlDataSourcePubicForum" ConnectionString='<%$ ConnectionStrings:AppConnectionString %>'
-                    SelectCommand="SELECT t.Forum_Id, t.Heading, t.Drescption, t.ForumBoard_Id, t.UserId, t.CreateDate, TU.username, TU.routusername, TUI.ImageFileName, count(DISTINCT TFT.topic_id) as TopicCount, COUNT(DISTINCT TFTR.Id) as TopicReplyCount
+                <asp:SqlDataSource runat="server" ID="SqlDataSourcePubicForum" ConnectionString='<%$ ConnectionStrings:AppConnectionString %>' OnSelected ="SqlDataSourcePubicForum_Selected"
+                    SelectCommand="SELECT t.ForumId, t.Heading, t.Drescption, t.UserId, CONVERT(VARCHAR(19), t.CreateDate, 120) AS CreateDate, TU.username, TU.routusername, TUI.ImageFileName, count(DISTINCT TFT.topicid) as TopicCount, COUNT(DISTINCT TFTR.Id) as TopicReplyCount
                           FROM [Table_Forum] t
                           left JOIN table_User TU on TU.userid = t.userid
                           left JOIN table_image TUI on TUI.Imageid = TU.Imageid
-                          left JOIN Table_ForumTopic TFT on t.forum_id = TFT.forum_id
-                          left JOIN Table_ForumTopicReply TFTR on TFT.Topic_Id = TFTR.Topic_Id
-                          Group By  t.Forum_Id, t.Heading, t.Drescption, t.ForumBoard_Id, t.UserId, t.CreateDate, TU.username, TU.routusername, TUI.ImageFileName
+                          left JOIN Table_ForumTopic TFT on t.forumid = TFT.forumid
+                          left JOIN Table_ForumTopicReply TFTR on TFT.TopicId = TFTR.TopicId
+                          Group By  t.ForumId, t.Heading, t.Drescption, t.UserId, t.CreateDate, TU.username, TU.routusername, TUI.ImageFileName
                           ORDER BY t.[CreateDate] DESC"></asp:SqlDataSource>
-                <div class="panel-footer clearfix">
-                    <div class="pull-right">
-                        <asp:DataPager runat="server" ID="DataPagerPublicForom" PagedControlID="ListviewPublicForom">
+            
+            </div>
+          
+                <asp:panel runat ="server" ID="panelfooter" cssclass="card-footer clearfix">
+                    <div class="float-right">
+                        <uc1:PagingControl runat="server" ID="PagingControl" />
+                        <asp:DataPager runat="server" ID="DataPagerForom" QueryStringField="Page" PagedControlID="ListviewPublicForom" Visible="false">
                             <Fields>
-                                <asp:NumericPagerField PreviousPageText="<<" NextPageText=">>" ButtonCount="5" NumericButtonCssClass="btn btn-xs btn-default" CurrentPageLabelCssClass="btn btn-xs btn-default" NextPreviousButtonCssClass="btn btn-xs btn-default" />
+                                <asp:NumericPagerField PreviousPageText="<<" NextPageText=">>" ButtonCount="5" NumericButtonCssClass="btn btn-sm btn-default" CurrentPageLabelCssClass="btn btn-sm btn-default" NextPreviousButtonCssClass="btn btn-sm btn-default" />
                             </Fields>
                         </asp:DataPager>
                     </div>
-                    <div class="pull-Left"></div>
-                </div>
-            </div>
+                    <div class="float-Left"></div>
+                </asp:panel>
+           
         </div>
-        <div class="col-lg-4 col-md-4">
-
-            <uc1:NavigationSideMain runat="server" ID="NavigationSideMain" />
-            <div class="panel panel-default">
-                <div class="panel-heading">Create New Forum</div>
-                <div class="panel-body">
-                    <div class="form">
-                        <div class="form-group">
-                            <label for="TextBoxHeading" class="sr-only">Heading</label>
-                            <asp:TextBox ID="TextBoxHeading" runat="server" CssClass="form-control" placeholder="Forum Heading"></asp:TextBox>
-                        </div>
-                        <div class="form-group">
-                            <label for="TextBoxDrescption" class="sr-only">Drescption</label>
-                            <asp:TextBox ID="TextBoxDrescption" CssClass="form-control" runat="server" TextMode="MultiLine" placeholder="Forum Drescption"></asp:TextBox>
-                        </div>
-                        <div class="form-group">
-                            <asp:Label ID="LabelEM" runat="server" ForeColor="Maroon"></asp:Label>
-                        </div>
-                        <div class="form-group">
-                            <div class="pull-right">
-                                <asp:CheckBox ID="CheckBoxPostToMyWall" CssClass="text-info text-muted" Text="Share on my wall" runat="server" Checked ="true"  />
-                                <asp:Button ID="ButtonPostForum" runat="server" Text="Create Forum" class="btn btn-primary" OnClick="ButtonPostForum_Click" />
-                            </div>
-                        </div> 
-                    </div>
-                </div>
-            </div>
+         <div class="col-12 col-sm-12 col-md-12 col-lg-4 col-xl-4">
+                       <div class ="card">
+              <asp:Panel ID="PanelPagebody" CssClass ="card-body " runat="server"></asp:Panel></div>
+             <uc1:AdsenseAds runat="server" ID="AdsenseAds1" Adsformat="rectangle" />
+             <uc1:TagOfAllForums runat="server" ID="TagOfAllForums" />
         </div>
-    </div>
+    </div> 
 </asp:Content>
 

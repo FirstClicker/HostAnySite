@@ -1,104 +1,148 @@
 ﻿<%@ Master Language="VB" %>
-
 <%@ Import Namespace="System.Data.SqlClient" %>
+<%@ Register Src="~/App_Controls/FacebookPluginsMasterCode.ascx" TagPrefix="uc1" TagName="FacebookPluginsMasterCode" %>
+
 
 <!DOCTYPE html>
-
 <script runat="server">
+    ' version 28/05/2019 # 11.27 PM
 
     Protected Sub Page_Load(sender As Object, e As EventArgs)
-        HyperLinkHome.Text = ClassAppDetails.WebSiteName
-        LabelCopyRight.Text = ClassAppDetails.CopyRight
+        Page.Header.DataBind() ' to execute <%# variable %>
 
+        ' for seo 
+        Dim uri As Uri = New Uri(Request.Url.AbsoluteUri.ToLower)
+        '  Dim requested As String = uri.Scheme + Uri.SchemeDelimiter + uri.Host & ":" + uri.Port
+        'http,://,besthdpics.com:,80
 
-        If Not (IsPostBack) Then
-            CurrentThemeLink.Attributes.Add("href", ClassAppDetails.CurrentTheme)
-
-            If Trim(Session("UserName")) <> "" Then ' user signed in
-                LabelUser.Text = Session("UserName")
-                liSignIn.Visible = False
-                liSignUp.Visible = False
-
-                liProfile.Visible = True
-                HyperLinkProfile.NavigateUrl = "~/user/" & Trim(Session("RoutUserName"))
-
-                liDashboard.Visible = True
-
-                Dim Cusertype As New ClassHostAnySite.User.UserType
-                Try
-                    Cusertype = [Enum].Parse(GetType(ClassHostAnySite.User.UserType), Trim(Session("UserType")), True)
-                Catch ex As Exception
-                End Try
-                If Cusertype = ClassHostAnySite.User.UserType.Administrator Or Cusertype = ClassHostAnySite.User.UserType.Moderator Then
-                    liAdminPanel.Visible = True
-                Else
-                    liAdminPanel.Visible = False
-                End If
-
-                liSignout.Visible = True
-
-                MessageNotification.Visible = True
-                UserNotification.Visible = True
-                HyperLinkmessagenotification0.NavigateUrl = "~/dashboard/Message/"
-            Else
-                LabelUser.Text = "Guest"
-
-                liProfile.Visible = False
-                liDashboard.Visible = False
-                liAdminPanel.Visible = False
-                liSignout.Visible = False
-
-                liSignIn.Visible = True
-                liSignUp.Visible = True
-
-                MessageNotification.Visible = False
-                UserNotification.Visible = False
-            End If
-
-            If MessageNotification.Visible = True Then
-                Dim myConn As SqlConnection
-                Dim myCmd As SqlCommand
-                Dim myReader As SqlDataReader
-
-                myConn = New SqlConnection(ClassAppDetails.DBCS)
-                myCmd = myConn.CreateCommand
-                myConn.Open()
-
-
-                myCmd.CommandText = "SELECT  COUNT(*) OVER () AS mymsgnum, count(*) RecordsPerGroup, TU0.[UserId], TU0.[UserName], TU0.[RoutUserName], TU0.imageid, max(postdate) as postdate"
-                myCmd.CommandText = myCmd.CommandText & " FROM Table_userChatMessage TUCM"
-                myCmd.CommandText = myCmd.CommandText & " left JOIN Table_User TU0 on TU0.userid = TUCM.userid"
-                myCmd.CommandText = myCmd.CommandText & " left JOIN Table_UserChat TUC on TUCM.ChatId = TUC.ChatId"
-                myCmd.CommandText = myCmd.CommandText & " left JOIN Table_User TU1 on TU1.userid = TUC.First_userid"
-                myCmd.CommandText = myCmd.CommandText & " left JOIN Table_User TU2 on TU2.userid = TUC.second_userid"
-                myCmd.CommandText = myCmd.CommandText & " where ((TU1.userid ='" & Session("userid") & "') or (TU2.userid ='" & Session("userid") & "')) and (TUCM.isread='false') and TUCM.userid<>'" & Session("userid") & "'"
-                myCmd.CommandText = myCmd.CommandText & " group by TU0.[UserId], TU0.[UserName], TU0.[RoutUserName], TU0.imageid order by max(postdate) desc"
-                myReader = myCmd.ExecuteReader()
-
-                Dim numi As Integer = 1
-                Do While myReader.Read
-                    Select Case numi
-                        Case 1
-                            LabelMessageNum.Text = myReader.Item("mymsgnum")
-
-                            messagenotification1.Visible = True
-                            HyperLinkmessagenotification1.Text = myReader.Item("UserName") & " (" & myReader.Item("RecordsPerGroup").ToString & ")"
-                            HyperLinkmessagenotification1.NavigateUrl = "~/Message/" & myReader.Item("routUserName")
-                        Case 2
-                            messagenotification2.Visible = True
-                            HyperLinkmessagenotification2.Text = myReader.Item("UserName") & " (" & myReader.Item("RecordsPerGroup").ToString & ")"
-                            HyperLinkmessagenotification2.NavigateUrl = "~/Message/" & myReader.Item("routUserName")
-                        Case Else
-                            Exit Do
-                    End Select
-                    numi = numi + 1
-                Loop
-
-                myReader.Close()
-                myConn.Close()
-            End If
+        If uri.Host.Contains("www.") Then
+            Response.Status = "301 Moved Permanently"
+            Response.AddHeader("Location", uri.Scheme + Uri.SchemeDelimiter + uri.Host.Replace("www.", "") & Request.RawUrl)
         End If
+
+        'cloudflare is redirecting to https
+        ' If Not Request.IsLocal AndAlso Not Request.IsSecureConnection Then
+        ' Dim redirectUrl As String = Request.Url.ToString().Replace("http:", "https:")
+        ' Response.Redirect(redirectUrl, False)
+        ' End If
+        ' for seo 
+
+        HyperLinkHome.Text = WebAppSettings.WebSiteName
+        LabelCopyRight.Text = WebAppSettings.CopyRightText
+
+        If Trim(WebAppSettings.WebSiteCurrentTheme) <> "" Then
+            CurrentThemeLink.Attributes.Add("href", WebAppSettings.WebSiteCurrentTheme)
+        Else
+            CurrentThemeLink.Visible = False
+        End If
+
+
+        LiHasApp_Forum.Visible = WebAppSettings.HasApp_Forum_IsEnabled
+        LiHasApp_Blog.Visible = WebAppSettings.HasApp_Blog_IsEnabled
+        LiHasApp_question.Visible = WebAppSettings.HasApp_Question_IsEnabled
+        LiHasApp_Compare.Visible = WebAppSettings.HasApp_CompareList_IsEnabled
+
+        LiHasApp_GoogleCSE.Visible = WebAppSettings.GoogleCSE_IsEnabled
+        LiteralADDthis.Text = WebAppSettings.ADDthis_MasterCode
+
+
+        If Trim(Session("UserName")) <> "" Then ' user signed in
+            LabelUser.Text = Session("UserName")
+            liSignIn.Visible = False
+            liSignUp.Visible = False
+
+            liProfile.Visible = True
+            HyperLinkProfile.NavigateUrl = "~/user/" & Trim(Session("RoutUserName"))
+
+            liDashboard.Visible = True
+
+            Dim Cusertype As New FirstClickerService.Version1.User.UserType
+            Try
+                Cusertype = [Enum].Parse(GetType(FirstClickerService.Version1.User.UserType), Trim(Session("UserType")), True)
+            Catch ex As Exception
+            End Try
+            If Cusertype = FirstClickerService.Version1.User.UserType.Administrator Or Cusertype = FirstClickerService.Version1.User.UserType.Moderator Then
+                liAdminPanel.Visible = True
+            Else
+                liAdminPanel.Visible = False
+            End If
+
+            liSignout.Visible = True
+
+            UserNotification.Visible = True
+            MessageNotification.Visible = True
+            HyperLinkmessagenotification0.NavigateUrl = "~/dashboard/inbox.aspx"
+        Else
+            LabelUser.Text = "Guest"
+
+            liProfile.Visible = False
+            liDashboard.Visible = False
+            liAdminPanel.Visible = False
+            liSignout.Visible = False
+
+            liSignIn.Visible = True
+            liSignUp.Visible = True
+
+            MessageNotification.Visible = False
+            UserNotification.Visible = False
+        End If
+
+        If MessageNotification.Visible = True Then
+            Dim myConn As SqlConnection
+            Dim myCmd As SqlCommand
+            Dim myReader As SqlDataReader
+
+            myConn = New SqlConnection(WebAppSettings.DBCS)
+            myCmd = myConn.CreateCommand
+            myConn.Open()
+
+
+            myCmd.Parameters.Add("@userid", sqlDbType:=Data.SqlDbType.NChar).Value = Session("userid")
+
+            myCmd.CommandText = "SELECT  COUNT(*) OVER () AS mymsgnum, count(*) RecordsPerGroup, TU0.[UserId], TU0.[UserName], TU0.[RoutUserName], TU0.imageid, max(postdate) as postdate"
+            myCmd.CommandText = myCmd.CommandText & " FROM Table_userChatMessage TUCM"
+            myCmd.CommandText = myCmd.CommandText & " left JOIN Table_User TU0 on TU0.userid = TUCM.userid"
+            myCmd.CommandText = myCmd.CommandText & " left JOIN Table_UserChat TUC on TUCM.ChatId = TUC.ChatId"
+            myCmd.CommandText = myCmd.CommandText & " left JOIN Table_User TU1 on TU1.userid = TUC.First_userid"
+            myCmd.CommandText = myCmd.CommandText & " left JOIN Table_User TU2 on TU2.userid = TUC.second_userid"
+            myCmd.CommandText = myCmd.CommandText & " where ((TU1.userid =@userid) or (TU2.userid =@userid)) and (TUCM.isread='false') and TUCM.userid<>@userid"
+            myCmd.CommandText = myCmd.CommandText & " group by TU0.[UserId], TU0.[UserName], TU0.[RoutUserName], TU0.imageid order by max(postdate) desc"
+            myReader = myCmd.ExecuteReader()
+
+            Dim numi As Integer = 1
+            Do While myReader.Read
+                Select Case numi
+                    Case 1
+                        LabelMessageNum.Text = myReader.Item("mymsgnum")
+
+                        messagenotification1.Visible = True
+                        HyperLinkmessagenotification1.Text = myReader.Item("UserName") & " (" & myReader.Item("RecordsPerGroup").ToString & ")"
+                        HyperLinkmessagenotification1.NavigateUrl = "~/Message/" & myReader.Item("routUserName")
+                    Case 2
+                        messagenotification2.Visible = True
+                        HyperLinkmessagenotification2.Text = myReader.Item("UserName") & " (" & myReader.Item("RecordsPerGroup").ToString & ")"
+                        HyperLinkmessagenotification2.NavigateUrl = "~/Message/" & myReader.Item("routUserName")
+                    Case Else
+                        Exit Do
+                End Select
+                numi = numi + 1
+            Loop
+
+            myReader.Close()
+            myConn.Close()
+        End If
+
+
+
     End Sub
+
+
+    Protected Sub ButtonSearch_Click(sender As Object, e As EventArgs)
+        If Trim(TextBoxSearch.Text) = "" Then Exit Sub
+        Response.Redirect("~/search/result.aspx?q=" & TextBoxSearch.Text)
+    End Sub
+
+
 
     Protected Sub SqlDataSourceUserNotification_Selected(sender As Object, e As SqlDataSourceStatusEventArgs)
         LabelUserNotificationCount.Text = e.AffectedRows
@@ -108,109 +152,186 @@
     End Sub
 
     Protected Sub ButtonClearNotification_Click(sender As Object, e As EventArgs)
-        ClassHostAnySite.UserNotification.Notification_ClearAll(Val(Session("UserId")), ClassAppDetails.DBCS)
-
+        FirstClickerService.Version1.UserNotification.Notification_ClearAll(Val(Session("UserId")), WebAppSettings.DBCS)
         ListViewUserNotification.DataBind()
     End Sub
 </script>
 
-<html xmlns="http://www.w3.org/1999/xhtml">
+<html>
 <head runat="server">
     <title></title>
 
+    <!-- Required meta tags -->
     <meta charset="utf-8" />
-    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
 
     <!-- Bootstrap -->
-    <link href="Content/bootstrap.min.css" rel="stylesheet" />
-    <link id="CurrentThemeLink" href="Content/bootstrap.shamrock.min.css" rel="stylesheet" runat="server" />
+    <link rel="stylesheet" href="Content/bootstrap.min.css" />
+    <link rel="stylesheet" id="CurrentThemeLink" runat="server" />
 
-     <link rel="stylesheet" href="Content/font-awesome.min.css" />
+    <link rel="stylesheet" href="Content/fontawesome-all.min.css" />
 
     <!-- Custom styles for this template -->
-    <link href="Content/custom.css" rel="stylesheet" />
+    <link rel="stylesheet" href="Content/custom.css" />
 
-    <link rel='shortcut icon' type='image/x-icon' href='/favicon.ico' />
+    <link rel="shortcut icon" type="image/png" href="Content/image/logo.png" />
+    <link rel="shortcut icon" type="image/ico" href="Content/image/favicon.ico" />
+
     <asp:ContentPlaceHolder ID="head" runat="server">
     </asp:ContentPlaceHolder>
+
+    <meta runat="server" id="FB_appID" property="fb:app_id" content="187066028072320" />
+
+    <!-- adsense auto ads -->
+    <script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+    <script>
+        (adsbygoogle = window.adsbygoogle || []).push({
+            google_ad_client: "<%# WebAppSettings.GoogleAdsense_AutoAdsID %>",
+            enable_page_level_ads: true
+        });
+    </script>
+    <!-- adsense auto ads -->
+
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=<%# WebAppSettings.GoogleAnalytics_ID %>"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag() { dataLayer.push(arguments); }
+        gtag('js', new Date());
+        gtag('config', '<%# WebAppSettings.GoogleAnalytics_ID %>');
+    </script>
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+
 </head>
 <body>
 
-    <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
-    <script src='<%= ResolveUrl("~/Scripts/jquery-3.1.1.min.js")%>'></script>
-    <!-- Include all compiled plugins (below), or include individual files as needed -->
-    <script src='<%= ResolveUrl("~/Scripts/bootstrap.min.js")%>'></script>
-     <script src='<%= ResolveUrl("~/Scripts/custom.js")%>'></script>
+    <uc1:FacebookPluginsMasterCode runat="server" ID="FacebookPluginsMasterCode" />
     <form id="form1" runat="server">
-        <asp:ScriptManager ID="ScriptManager1" runat="server" EnablePageMethods="true"></asp:ScriptManager>
-         <nav class="navbar navbar-default navbar-static-top">
-            <div class="container notranslate">
-                <!-- Brand and toggle get grouped for better mobile display -->
-                <div class="navbar-header">
-                    <div class="navbar-toggle" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1">
-                        <span class="sr-only">Toggle navigation</span>
-                        <span class="icon-bar"></span>
-                        <span class="icon-bar"></span>
-                        <span class="icon-bar"></span>
-                    </div>
+        <asp:ScriptManager ID="ScriptManagerGlobal" runat="server">
+            <CompositeScript>
+                <Scripts>
+                    <asp:ScriptReference Path="~/Scripts/jquery-3.4.1.slim.min.js"></asp:ScriptReference>
+                    <asp:ScriptReference Path="~/Scripts/umd/popper.min.js"></asp:ScriptReference>
+                    <asp:ScriptReference Path="~/Scripts/bootstrap.min.js"></asp:ScriptReference>
+                    <asp:ScriptReference Path="~/Scripts/custom.js"></asp:ScriptReference>
+                </Scripts>
+            </CompositeScript>
+        </asp:ScriptManager>
 
-                    <a href="#" class="pull-left" style="padding :5px"><asp:image runat ="server" ID="brandlogo" imageurl="~/Content/Image/Logo.png" Height="40" /></a>
-                    <asp:HyperLink ID="HyperLinkHome" runat="server" CssClass="navbar-brand" NavigateUrl="~/"> Site Name</asp:HyperLink>
+        <nav class="navbar navbar-expand-lg navbar-dark bg-primary mb-2 border">
+            <div class="container">
+                <!-- Brand and toggle get grouped for better mobile display -->
+
+                <div class="navbar-brand nav-link">
+                    <asp:Image runat="server" ID="brandlogo" ImageUrl="~/Content/Image/logo.png" Height="40" />
+                    <asp:HyperLink ID="HyperLinkHome" CssClass="text-white" runat="server" NavigateUrl="~/"> Website Name</asp:HyperLink>
                 </div>
 
+                <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#NavbarCollapseBody" aria-controls="navbarText" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+
                 <!-- Collect the nav links, forms, and other content for toggling -->
-                <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
-                    <ul class="nav navbar-nav navbar-right">
-                       
-                        <li runat="server" id="UserNotification" class="dropdown">
-                            <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
-                                <span class="badge">
-                                    <i class="fa fa-globe fa-lg" aria-hidden="true"></i>&nbsp;&nbsp;<asp:Label ID="LabelUserNotificationCount" runat="server" Text="0" />
-                                </span>
+
+                <div class="collapse navbar-collapse" id="NavbarCollapseBody">
+                    <ul class="navbar-nav mr-auto">
+                        <li runat="server" id="Li1" class="nav-item dropdown">
+                            <a href="#" class=" nav-link dropdown-toggle font-weight-bold " data-toggle="dropdown" role="button" aria-expanded="false">
+                                <i class="fa fa-list" aria-hidden="true"></i>&nbsp;What to do!!
                             </a>
-                            <ul class="dropdown-menu" style ="width:250px;">
-                                <li class=" list-group-item" style ="margin-top :0px;">
-                                    <asp:Button ID="ButtonClearNotification" CssClass ="btn btn-xs btn-info pull-right" OnClick ="ButtonClearNotification_Click"  runat="server" Text="Clear All" />
-                                    <strong> <span class="text-primary">Notification</span></strong>
+                            <ul class="dropdown-menu" role="menu">
+                                <li runat="server" class="dropdown-item" id="LiHasApp_Forum">
+                                    <asp:HyperLink ID="HyperLink11" runat="server" NavigateUrl="~/Forum/"><i class="fab fa-foursquare"></i>&nbsp;Forum</asp:HyperLink>
+                                </li>
+                                <li runat="server" class="dropdown-item" id="LiHasApp_Blog">
+                                    <asp:HyperLink ID="HyperLink8" runat="server" NavigateUrl="~/Blog/"><i class="fab fa-blogger"></i>&nbsp;Blog</asp:HyperLink>
+                                </li>
+                                <li runat="server" class="dropdown-item" id="LiHasApp_Compare">
+                                    <asp:HyperLink ID="HyperLink9" runat="server" NavigateUrl="~/Compare/"><i class="fa fa-balance-scale"></i>&nbsp;Compare List</asp:HyperLink>
+                                </li>
+                                <li runat="server" class="dropdown-item" id="LiHasApp_question">
+                                    <asp:HyperLink ID="HyperLink14" runat="server" NavigateUrl="~/question/"><i class="fas fa-question"></i>&nbsp;Question</asp:HyperLink>
+                                </li>
+                                <li runat="server" class="dropdown-item" id="LiHasApp_image">
+                                    <asp:HyperLink ID="HyperLink13" runat="server" NavigateUrl="~/image/"><i class="far fa-images"></i>&nbsp;Image</asp:HyperLink>
+                                </li>
+
+                            </ul>
+                        </li>
+                    </ul>
+
+                    <ul class="navbar-nav ">
+                        <li runat="server" id="LiHasApp_GoogleCSE" class="nav-item dropdown mr-2">
+                            <a href="#" class="nav-link dropdown-toggle" data-toggle="dropdown">
+                                <i class="fab fa-lg fa-searchengin"></i>&nbsp;<asp:Label ID="Label3" runat="server" CssClass="mr-1 d-lg-none" Text="Search"></asp:Label>
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-right pt-0 pb-0" style="min-width: 300px;">
+                                <li class="list-group-item ">
+                                    <div class="form-inline">
+                                        <div class="input-group input-group-sm">
+                                            <div class="input-group-prepend">
+                                                <span class="input-group-text"><i class="fab fa-searchengin"></i></span>
+                                            </div>
+                                            <asp:TextBox ID="TextBoxSearch" runat="server" CssClass="form-control form-control-sm "></asp:TextBox>
+                                            <div class="input-group-append">
+                                                <asp:Button class="btn btn-sm btn-info" runat="server" ID="ButtonSearch" type="button" OnClick="ButtonSearch_Click" Text="Search"></asp:Button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </li>
+                            </ul>
+                        </li>
+
+
+                        <li runat="server" id="UserNotification" class="nav-item dropdown mr-2">
+                            <a href="#" class="nav-link dropdown-toggle" data-toggle="dropdown">
+                                <i class="fa fa-globe fa-lg" aria-hidden="true"></i>&nbsp;<asp:Label ID="Label1" runat="server" CssClass="mr-1 d-lg-none" Text="Notification"></asp:Label><asp:Label ID="LabelUserNotificationCount" runat="server" Text="0" />
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-right pt-0 pb-0" style="min-width: 300px;">
+                                <li class="list-group-item clearfix">
+                                    <span class=" text-primary font-weight-bold">Notification</span>
+                                    <asp:Button ID="ButtonClearNotification" CssClass="btn btn-sm float-right" OnClick="ButtonClearNotification_Click" runat="server" Text="Clear All" />
                                 </li>
                                 <asp:ListView ID="ListViewUserNotification" runat="server" DataSourceID="SqlDataSourceUserNotification" DataKeyNames="NotificationID">
                                     <EmptyDataTemplate>
-                                        <li >
-                                            <asp:HyperLink ID="HyperLinkNonotification" CssClass ="small " runat="server">No notification</asp:HyperLink></li>
+                                        <li class="list-group-item">
+                                            <asp:HyperLink ID="HyperLinkNonotification" CssClass="small " runat="server">No notification</asp:HyperLink>
+                                        </li>
                                     </EmptyDataTemplate>
                                     <ItemTemplate>
                                         <li class="list-group-item clearfix">
                                             <div class="media">
-                                                <asp:Panel runat="server" ID="PanelImageCointainer" class="media-left" Visible ='<%# CBool(Eval("UserID")) %>'>
-                                                    <asp:Image runat="server" ID="ImageNotifyUser" Width="30" Height ="40" />
-                                                </asp:Panel>
+                                                <asp:Image runat="server" ID="ImageNotifyUser" Visible='<%# CBool(Eval("UserID")) %>' ImageUrl='<%# "~/storage/image/" & Eval("ImageFileName") %>' Width="40" Height="40" CssClass="mr-3" />
                                                 <div class="media-body">
-                                                    <h5 class="media-heading">
-                                                        <asp:Label Text='<%# Eval("Notification") %>' runat="server" ID="NotificationLabel" />
-                                                        <small>
-                                                            <asp:Label Text='<%# ClassHostAnySite.HostAnySite.ConvertDateTime4Use(Eval("NotifyDate")) %>' runat="server" ID="NotifyDateLabel" />
-                                                        </small>
-                                                    </h5>
+                                                    <asp:HyperLink ID="HyperLink10" CssClass="font-weight-bold" runat="server" NavigateUrl='<%# "~/user/" & Eval("routusername") %>'><%# Eval("username") %></asp:HyperLink>&nbsp;<asp:HyperLink Text='<%# Eval("Notification") %>' NavigateUrl='<%# Eval("TargetUrl") %>' runat="server" ID="Notificationhyperlink" />
+                                                    <small>
+                                                        <br />
+                                                        <asp:Label Text='<%#FirstClickerService.Common.ConvertDateTime4Use(Eval("NotifyDateF")) %>' runat="server" ID="NotifyDateLabel" />
+                                                    </small>
                                                 </div>
                                             </div>
                                         </li>
                                     </ItemTemplate>
                                     <LayoutTemplate>
-                                            <li runat="server" id="itemPlaceholder" />
+                                        <li runat="server" id="itemPlaceholder" />
                                     </LayoutTemplate>
                                 </asp:ListView>
-                                <asp:SqlDataSource runat="server" ID="SqlDataSourceUserNotification"  OnSelected ="SqlDataSourceUserNotification_Selected" ConnectionString='<%$ ConnectionStrings:AppConnectionString %>'
-                                    SelectCommand="SELECT * FROM [Table_UserNotification] where (status='UnRead') and (Notify2UserID=@userID) order by [NotifyDate] DESC">
+                                <asp:SqlDataSource runat="server" ID="SqlDataSourceUserNotification" OnSelected="SqlDataSourceUserNotification_Selected" ConnectionString='<%$ ConnectionStrings:AppConnectionString %>'
+                                    SelectCommand="SELECT TUN.*, CONVERT(VARCHAR(19), TUN.NotifyDate, 120) AS NotifyDateF, tu.username, tu.routusername, Ti.Imagefilename 
+                                    FROM [Table_UserNotification] TUN
+                                    left join table_user TU on TU.userID=TUN.userid
+                                    left Join table_image TI on TI.Imageid=TU.imageid 
+                                    where (TUN.status='UnRead') and (TUN.Notify2UserID=@userID) 
+                                    order by [NotifyDate] DESC">
                                     <SelectParameters>
                                         <asp:SessionParameter Name="UserID" SessionField="UserID" DefaultValue="0" DbType="Decimal" />
                                     </SelectParameters>
                                 </asp:SqlDataSource>
-                                <li runat="server" id="DataPagerUserNotificationcointainer" cssclass=" list-group-item clearfix">
-                                    <div class="pull-right ">
+                                <li runat="server" id="DataPagerUserNotificationcointainer" cssclass="list-group-item clearfix">
+                                    <div class="float-right ">
                                         <asp:DataPager runat="server" ID="DataPagerUserNotification" PagedControlID="ListViewUserNotification">
                                             <Fields>
-                                                <asp:NumericPagerField PreviousPageText="<<" NextPageText=">>" ButtonCount="3" NumericButtonCssClass="btn btn-xs btn-default" CurrentPageLabelCssClass="btn btn-xs btn-default" NextPreviousButtonCssClass="btn btn-xs btn-default" />
+                                                <asp:NumericPagerField PreviousPageText="<<" NextPageText=">>" ButtonCount="3" NumericButtonCssClass="btn btn-sm" CurrentPageLabelCssClass="btn btn-sm " NextPreviousButtonCssClass="btn btn-sm" />
                                             </Fields>
                                         </asp:DataPager>
                                     </div>
@@ -218,43 +339,45 @@
                             </ul>
                         </li>
 
-                        <li runat="server" id="MessageNotification" class="dropdown">
-                            <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
-                                 <span class ="badge" >
-                                <i class="fa fa-envelope-o fa-lg" aria-hidden="true"></i>&nbsp;&nbsp;<asp:Label ID="LabelMessageNum" runat="server" Text="0" /></span> 
+
+                        <li runat="server" id="MessageNotification" class="nav-item dropdown ">
+                            <a href="#" class="nav-link dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
+                                <i class="fa fa-envelope fa-lg" aria-hidden="true"></i>&nbsp;<asp:Label ID="Label2" runat="server" CssClass="mr-1 d-lg-none" Text="Message"></asp:Label><asp:Label ID="LabelMessageNum" runat="server" CssClass="mr-1" Text="0" />
                             </a>
                             <ul class="dropdown-menu" role="menu">
-                                <li runat="server" id="messagenotification1" visible="false">
+                                <li runat="server" id="messagenotification1" class="dropdown-item" visible="false">
                                     <asp:HyperLink ID="HyperLinkmessagenotification1" runat="server"></asp:HyperLink></li>
-                                <li runat="server" id="messagenotification2" visible="false">
+                                <li runat="server" id="messagenotification2" class="dropdown-item" visible="false">
                                     <asp:HyperLink ID="HyperLinkmessagenotification2" runat="server"></asp:HyperLink></li>
-                                <li runat="server" id="messagenotification0">
+                                <li runat="server" id="messagenotification0" class="dropdown-item">
                                     <asp:HyperLink ID="HyperLinkmessagenotification0" runat="server">View Inbox</asp:HyperLink></li>
                             </ul>
                         </li>
 
-                        <li class="dropdown">
-                            <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false"><i class="fa fa-user fa-fw"></i>
-                                &nbsp;<asp:Label ID="LabelUser" CssClass="text-capitalize" runat="server" Text="Guest">&nbsp;</asp:Label><span class="caret" /></a>
-                            <ul runat="server" id="DropdownUserName" class="dropdown-menu">
-                                <li runat="server" id="liProfile">
-                                    <asp:HyperLink ID="HyperLinkProfile" runat="server"><i class="fa fa-user fa-fw"></i>&nbsp;Profile</asp:HyperLink></li>
-                                <li runat="server" id="liDashboard">
-                                    <asp:HyperLink ID="HyperLink1" NavigateUrl="~/Dashboard/" runat="server"><i class="fa fa-dashboard fa-fw"></i>&nbsp;Dashboard</asp:HyperLink>
+
+                        <li class="nav-item dropdown">
+                            <a href="#" class="nav-link dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">
+                                <i class="fa fa-user fa-fw"></i>&nbsp;<asp:Label ID="LabelUser" CssClass="text-capitalize" runat="server" Text="Guest"></asp:Label>
+                            </a>
+                            <ul runat="server" id="DropdownUserName" class="dropdown-menu dropdown-menu-right" role="menu">
+                                <li runat="server" class="dropdown-item" id="liProfile">
+                                    <asp:HyperLink ID="HyperLinkProfile" runat="server"><i class="fas fa-user fa-fw"></i>&nbsp;Profile</asp:HyperLink></li>
+                                <li runat="server" class="dropdown-item" id="liDashboard">
+                                    <asp:HyperLink ID="HyperLink1" NavigateUrl="~/Dashboard/" runat="server"><i class="fas fa-home fa-fw"></i>&nbsp;Dashboard</asp:HyperLink>
                                 </li>
-                                <li runat="server" id="liAdminPanel">
-                                    <asp:HyperLink ID="HyperLink12" NavigateUrl="~/AdminPanel/" runat="server"><i class="fa fa-user-secret" aria-hidden="true"></i>&nbsp;AdminPanel</asp:HyperLink>
+                                <li runat="server" class="dropdown-item" id="liAdminPanel">
+                                    <asp:HyperLink ID="HyperLink12" NavigateUrl="~/AdminPanel/" runat="server"><i class="fas fa-user-secret" aria-hidden="true"></i>&nbsp;AdminPanel</asp:HyperLink>
                                 </li>
-                                <li runat="server" id="liSignIn">
-                                    <asp:HyperLink ID="HyperLink2" NavigateUrl="~/user/signin.aspx" runat="server"><i class="fa  fa-sign-in"></i>&nbsp;Sign In</asp:HyperLink>
+                                <li runat="server" class="dropdown-item" id="liSignIn">
+                                    <asp:HyperLink ID="HyperLink2" NavigateUrl="~/user/signin.aspx" runat="server"><i class="fas fa-sign-in-alt"></i>&nbsp;Sign In</asp:HyperLink>
                                 </li>
-                                <li class="divider"></li>
-                                <li runat="server" id="liSignout">
-                                    <asp:HyperLink ID="HyperLink3" NavigateUrl="~/user/signout.aspx" runat="server"><i class="fa fa-sign-out"></i>&nbsp;Sign Out</asp:HyperLink>
+                                <li class="dropdown-divider"></li>
+                                <li runat="server" class="dropdown-item" id="liSignout">
+                                    <asp:HyperLink ID="HyperLink3" NavigateUrl="~/user/signout.aspx" runat="server"><i class="fas fa-sign-out-alt"></i>&nbsp;Sign Out</asp:HyperLink>
                                 </li>
 
-                                <li runat="server" id="liSignUp">
-                                    <asp:HyperLink ID="HyperLink4" NavigateUrl="~/user/signup.aspx" runat="server"><i class="fa fa-user-plus"></i>&nbsp;Sign Up</asp:HyperLink>
+                                <li runat="server" class="dropdown-item" id="liSignUp">
+                                    <asp:HyperLink ID="HyperLink4" NavigateUrl="~/user/signup.aspx" runat="server"><i class="fas fa-user-plus"></i>&nbsp;Sign Up</asp:HyperLink>
                                 </li>
                             </ul>
                         </li>
@@ -264,19 +387,39 @@
             </div>
             <!-- /.container -->
         </nav>
-        <div class="container">
+
+        <div class="container pt-1 pb-3 ">
             <asp:ContentPlaceHolder ID="ContentPlaceHolder1" runat="server">
             </asp:ContentPlaceHolder>
         </div>
-        <footer class="footer">
-         
-                <div class="container">
-                    <p class="text-muted">
-                        <asp:Label ID="LabelCopyRight" runat="server" Text=""></asp:Label>
-                    </p>
+        <footer class="footer border">
+            <div class="container">
+                <div class="text-center m-0">
+                    <ul class="list-inline p-1 m-0">
+                        <li class="list-inline-item">
+                            <asp:HyperLink ID="HyperLink5" runat="server" CssClass="text-muted small" NavigateUrl="~/Support/Terms.aspx"><strong>Terms</strong></asp:HyperLink>
+                        </li>
+                        <li class="list-inline-item">.</li>
+                        <li class="list-inline-item">
+                            <asp:HyperLink ID="HyperLink6" runat="server" CssClass="text-muted small" NavigateUrl="~/Support/Privacy.aspx"><strong>Privacy</strong></asp:HyperLink>
+                        </li>
+                        <li class="list-inline-item">.</li>
+                        <li class="list-inline-item">
+                            <asp:HyperLink ID="HyperLink7" runat="server" CssClass="text-muted small" NavigateUrl="~/Support/AboutUs.aspx"><strong>About Us</strong></asp:HyperLink>
+                        </li>
+                    </ul>
                 </div>
-          
+                <div class="text-muted text-center m-0">
+                    <asp:Label ID="LabelCopyRight" runat="server" Text=""></asp:Label>
+                </div>
+            </div>
         </footer>
     </form>
+
+    <asp:Literal ID="LiteralADDthis" runat="server"></asp:Literal>
+
+   
+
+
 </body>
 </html>

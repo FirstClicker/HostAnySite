@@ -1,22 +1,36 @@
-﻿<%@ Page Title="" Language="VB" MasterPageFile="~/default.master" %>
+﻿<%@ Page Title="" Language="VB" MasterPageFile="~/Default.master" %>
 
-<%@ Register Src="~/app_controls/web/ImageCarousel.ascx" TagPrefix="uc1" TagName="ImageCarousel" %>
+<%@ Register Src="~/App_Controls/UserSignInFacebookButton.ascx" TagPrefix="uc1" TagName="UserSignInFacebookButton" %>
+<%@ Register Src="~/App_Controls/UserSignInTwitterButton.ascx" TagPrefix="uc1" TagName="UserSignInTwitterButton" %>
+<%@ Register Src="~/App_Controls/UserSignInGoogleButton.ascx" TagPrefix="uc1" TagName="UserSignInGoogleButton" %>
+
 
 
 
 <script runat="server">
+
+    Protected Sub Page_Load(sender As Object, e As EventArgs)
+        If IsPostBack = False Then
+            If Trim(Request.QueryString("ReturnURL")) = "" Then
+                UserSignInFacebookButton.returnurl = "~/Dashboard/"
+                UserSignInGoogleButton.returnurl = "~/Dashboard/"
+                UserSignInTwitterButton.returnurl = "~/Dashboard/"
+            End If
+        End If
+    End Sub
+
     Protected Sub ButtonSignUp_Click(sender As Object, e As EventArgs)
-        Dim returnurl As String = Trim(Request.QueryString("returnURL"))
+        If CheckBoxTerms.Checked = False Then
+            LabelEm.Text = "You must agree to the terms and conditions to create an account"
+            PanelEM.Visible = True
+            Exit Sub
+        End If
 
-        Dim createuser As ClassHostAnySite.User.StructureUser
+        Dim returnurl As String = Trim(Request.QueryString("ReturnURL"))
 
-        Dim ServiceEmailDetails As ClassHostAnySite.Email.StructureEmail = ClassHostAnySite.Email.ServiceEmail_Get(ClassAppDetails.DBCS)
-        Dim SendEmailVerifyMail As ClassHostAnySite.HostAnySite.StructureResult
-
-
-        createuser = ClassHostAnySite.User.Create_User(TextBoxUsername.Text, inputPassword.Text, ClassHostAnySite.User.UserType.Member, inputEmail.Text, ClassAppDetails.DBCS)
-        If createuser.Result = True Then
-
+        Dim CreateUser As FirstClickerService.Version1.User.StructureUser
+        CreateUser = FirstClickerService.Version1.User.Create_User(TextBoxUserName.Text, TextBoxPassword.Text, FirstClickerService.Version1.User.UserType.Member, TextBoxEmail.Text, WebAppSettings.DBCS)
+        If CreateUser.Result = True Then
             'remove old Cookies
             Dim myCookieRO As HttpCookie
             myCookieRO = New HttpCookie("HASApp")
@@ -26,34 +40,24 @@
             myCookieRO.Item("UserType") = ""
             Response.Cookies.Add(myCookieRO)
 
+            If WebAppSettings.UserEmailVerificationRequired = True Then
+                Dim SupportEmailDetails As FirstClickerService.Version1.SysEmailDetails.StructureEmailDetails = FirstClickerService.Version1.SysEmailDetails.Email_Get(FirstClickerService.Version1.SysEmailDetails.EmailNameEnum.Support, WebAppSettings.DBCS)
+                If SupportEmailDetails.Result = True AndAlso SupportEmailDetails.IsVerified = True Then
+                    Dim SendEmailVerifyMail As FirstClickerService.Common.StructureResult
 
-            If ServiceEmailDetails.Result = True Then
-                SendEmailVerifyMail = ClassHostAnySite.User.SendEmailVerificationMail(createuser.Email, ServiceEmailDetails, ClassAppDetails.DBCS)
-                If SendEmailVerifyMail.Result = False Then
-                    'report Error
-
+                    SendEmailVerifyMail = FirstClickerService.Version1.User.SendEmailVerificationMail(CreateUser.Email, SupportEmailDetails, WebAppSettings.DBCS)
+                    If SendEmailVerifyMail.Result = False Then
+                        '   report Error
+                    End If
+                    Response.Redirect("~/user/verifyemail.aspx?email=" & CreateUser.Email)
                 End If
             End If
 
-            Session("UserName") = createuser.UserName
-            Session("RoutUserName") = createuser.RoutUserName
-            Session("UserID") = createuser.UserID
-            Session("UserType") = createuser.UserType.ToString
+            Session("UserName") = CreateUser.UserName
+            Session("RoutUserName") = CreateUser.RoutUserName
+            Session("UserID") = CreateUser.UserID
+            Session("UserType") = CreateUser.UserType.ToString
 
-            If CheckBoxRememberMe.Checked = True Then
-                Dim myCookie As HttpCookie
-                myCookie = New HttpCookie("HASApp")
-                myCookie.Expires = DateTime.Now.AddDays(7D)
-                myCookie.Item("UserName") = createuser.UserName
-                myCookie.Item("RoutUserName") = createuser.RoutUserName
-                myCookie.Item("UserID") = createuser.UserID
-                myCookie.Item("UserType") = createuser.UserType.ToString
-                Response.Cookies.Add(myCookie)
-            End If
-
-
-            Dim posttowall As ClassHostAnySite.UserWall.StructureUserWall
-            posttowall = ClassHostAnySite.UserWall.UserWall_Add("", "Hi, I jost Joined...", "0", createuser.UserID, createuser.UserID, 0, "0", "visible", ClassAppDetails.DBCS)
 
             If returnurl = "" Then
                 Response.Redirect("~/Dashboard/")
@@ -61,89 +65,86 @@
                 Response.Redirect(returnurl)
             End If
         Else
-            LabelMsg.Text = createuser.My_Error_message
+            LabelEm.Text = CreateUser.My_Error_message
+            PanelEM.Visible = True
         End If
 
     End Sub
 
-    Protected Sub ButtonSignIn_Click(sender As Object, e As EventArgs)
-        Response.Redirect("~/user/signin.aspx")
-    End Sub
 
-
-    Protected Sub Page_Load(sender As Object, e As EventArgs)
-        ImageCarousel.Carousel_WebSetting = "SignUpCarouselImage"
-
-        Dim websetting As ClassHostAnySite.WebSetting.StructureWebSetting
-        websetting = ClassHostAnySite.WebSetting.WebSetting_Get("SignUpNote", ClassAppDetails.DBCS)
-        LabelSignupNote.Text = websetting.SettingValue
-    End Sub
 </script>
 
-<asp:Content ID="Content1" ContentPlaceHolderID="head" runat="Server">
+<asp:Content ID="Content1" ContentPlaceHolderID="head" Runat="Server">
 </asp:Content>
-<asp:Content ID="Content2" ContentPlaceHolderID="ContentPlaceHolder1" runat="Server">
+<asp:Content ID="Content2" ContentPlaceHolderID="ContentPlaceHolder1" Runat="Server">
     <div class="row">
-        <div class="col-lg-8 col-md-8  hidden-sm hidden-xs ">
-            <uc1:ImageCarousel runat="server" ID="ImageCarousel" />
-            <div class="panel">
-                <div class="panel-body">
-                    <asp:Label ID="LabelSignupNote" runat="server" Text="Create your Account."></asp:Label>
+        <div class="col-md-3"></div>
+        <div class="col-md-6 pt-4 pb-4 ">
+            <div class="card BoxEffect6">
+                <div class="card-header">
+                    <h4 class="card-title text-center text-muted ">Create New Account..</h4>
                 </div>
-            </div>
-        </div>
-        <div class="col-lg-4 col-md-4 col-sm-12 col-xs-12 pull-right">
-            <div class="panel panel-default ">
-                <div class="panel-heading ">Create Account</div>
-                <div class="panel-body ">
-                    <div class="form-signin">
-                        <div class="form-group">
-                            <div class="input-group">
-                                <span class="input-group-addon">
-                                    <i class="glyphicon glyphicon-user "></i>
-                                </span>
-                                <asp:TextBox ID="TextBoxUsername" runat="server" class="form-control" placeholder="Your Name"></asp:TextBox>
+                <div class="card-body">
+                   <div class="form-group">
+                        <label for="username">Your Name</label>
+                        <div class="input-group">
+                            <div class="input-group-prepend">
+                                <span class="input-group-text ">
+                                    <i class="fas fa-user"></i></span>
+                            </div>
+                            <asp:TextBox ID="TextBoxUserName" runat="server" CssClass="form-control" placeholder="eg. Good Name"></asp:TextBox>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="username-email">E-mail</label>
+                        <div class="input-group">
+                            <div class="input-group-prepend">
+                                <span class="input-group-text ">
+                                    <i class="fas fa-envelope"></i></span>
+                            </div>
+                            <asp:TextBox ID="TextBoxEmail" runat="server" CssClass="form-control" placeholder="eg. SomeOne@Domain.Com"></asp:TextBox>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="password">Password</label>
+                        <div class="input-group">
+                            <div class="input-group-prepend">
+                                <span class="input-group-text ">
+                                    <i class="fas fa-lock"></i></span>
+                            </div>
+                            <asp:TextBox ID="TextBoxPassword" CssClass="form-control" placeholder="Password" runat="server" TextMode="Password"></asp:TextBox>
+                        </div>
+                    </div>
+                    <div class="form-group clearfix ">
+                        <div class="float-left ">
+                            <div class="checkbox">
+                                <label>
+                                    <asp:CheckBox ID="CheckBoxTerms" runat="server" />
+                                    I agree to the <asp:HyperLink ID="HyperLink2" runat="server" NavigateUrl="~/Support/Terms.aspx">Terms & Conditions</asp:HyperLink></label>
                             </div>
                         </div>
-                        <div class="form-group">
-                            <div class="input-group">
-                                <span class="input-group-addon">
-                                    <i class="glyphicon glyphicon-envelope "></i>
-                                </span>
-                                <asp:TextBox ID="inputEmail" runat="server" class="form-control" placeholder="Email address"></asp:TextBox>
-                            </div>
+                        <div class="float-right ">
+                            <asp:Button ID="ButtonSignUp" runat="server" CssClass="btn btn-sm btn-primary" Text="Register Account" OnClick="ButtonSignUp_Click" />
                         </div>
-                        <div class="form-group">
-                            <div class="input-group">
-                                <span class="input-group-addon">
-                                    <i class="glyphicon glyphicon-lock"></i>
-                                </span>
-                                <asp:TextBox ID="inputPassword" class="form-control" placeholder="Password" runat="server" TextMode="Password"></asp:TextBox>
-                            </div>
-                        </div>
-                          <div class="form-group">
-                            <asp:Label ID="LabelMsg" runat="server" ForeColor="Maroon"></asp:Label>
-                        </div>
-                        <div class="form-group clearfix ">
-                            <div class="pull-left ">
-                                <div class="checkbox">
-                                    <label>
-                                        <asp:CheckBox ID="CheckBoxRememberMe" runat="server" />
-                                        Remember Me</label>
-                                </div>
-                            </div>
-                            <div class="pull-right">
-                                 <asp:Button ID="ButtonSignUp" runat="server" class="btn btn-primary" Text="Sign Up" OnClick="ButtonSignUp_Click" />
-                            </div>
-                        </div>
-                      
-                        <hr />
-                        <asp:Button ID="ButtonSignIn" runat="server" class="btn btn-primary btn-block" Text="Sign in" OnClick="ButtonSignIn_Click" />
+                    </div>
+                    <asp:panel runat ="server" ID="PanelEM" cssclass="form-group alert alert-danger " Visible="false">
+                        <i class="fas fa-info-circle mr-1"></i><asp:Label ID="LabelEm" runat="server" ></asp:Label>
+                    </asp:panel>
+                    <hr />
+                    <div class="form-group text-center">
+                        <uc1:UserSignInFacebookButton runat="server" ID="UserSignInFacebookButton"  />
+                        <uc1:UserSignInTwitterButton runat="server" id="UserSignInTwitterButton" />
+                        <uc1:UserSignInGoogleButton runat="server" ID="UserSignInGoogleButton" />
+                    </div>
+                    <hr />
+                    <div class="form-group text-center">
+                        <asp:HyperLink ID="HyperLink1" runat="server" NavigateUrl="~/User/signin.aspx">Already have an account? <span class="font-weight-bold "><i class="fas fa-sign-in-alt" aria-hidden="true"></i> SignIn</span></asp:HyperLink>
                     </div>
                 </div>
             </div>
         </div>
+        <div class="col-md-3"></div>
     </div>
 </asp:Content>
-
 

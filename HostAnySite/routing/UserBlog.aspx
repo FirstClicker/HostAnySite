@@ -1,15 +1,17 @@
-﻿<%@ Page Title="" Language="VB" MasterPageFile="~/default.master" %>
+﻿<%@ Page Title="" Language="VB" MasterPageFile="~/Default.master" %>
 
-<%@ Implements Interface="ClassHostAnySite.RoutUserInterface" %>
-<%@ Register Src="~/app_controls/web/UserInfoBox.ascx" TagPrefix="uc1" TagName="UserInfoBox" %>
-<%@ Register Src="~/app_controls/web/MenuUserProfile.ascx" TagPrefix="uc1" TagName="MenuUserProfile" %>
-<%@ Register Src="~/app_controls/web/BlogInListView.ascx" TagPrefix="uc1" TagName="BlogInListView" %>
+<%@ Implements Interface="RoutUserInterface" %>
+
+<%@ Register Src="~/App_Controls/NavigationSideUserProfile.ascx" TagPrefix="uc1" TagName="NavigationSideUserProfile" %>
+<%@ Register Src="~/App_Controls/UserWallEntry.ascx" TagPrefix="uc1" TagName="UserWallEntry" %>
+<%@ Register Src="~/App_Controls/BlogPreviewInList.ascx" TagPrefix="uc1" TagName="BlogPreviewInList" %>
+
 
 
 
 <script runat="server">
     Private m_RoutFace_RoutUserName As String
-    Public Property RoutFace_RoutUserName() As String Implements ClassHostAnySite.RoutUserInterface.RoutIFace_RoutUserName
+    Public Property RoutFace_RoutUserName() As String Implements RoutUserInterface.RoutIFace_RoutUserName
         Get
             Return m_RoutFace_RoutUserName
         End Get
@@ -18,118 +20,100 @@
         End Set
     End Property
 
-
-
     Protected Sub Page_Load(sender As Object, e As EventArgs)
-        Dim userinfo As ClassHostAnySite.User.StructureUser = ClassHostAnySite.User.UserDetail_RoutUserName(RoutFace_RoutUserName, ClassAppDetails.DBCS)
-        If userinfo.Result = False Then
-            Response.Redirect("~/")
-            Exit Sub
+        If IsPostBack = False Then
+            Dim userinfo As FirstClickerService.Version1.User.StructureUser = FirstClickerService.Version1.User.UserDetail_RoutUserName(RoutFace_RoutUserName, WebAppSettings.DBCS)
+            If userinfo.Result = False Then
+                Response.Redirect("~/")
+                Exit Sub
+            End If
+
+            NavigationSideUserProfile.UserName = Trim(userinfo.UserName)
+            NavigationSideUserProfile.ImageFileName = userinfo.UserImage.ImageFileName
+            NavigationSideUserProfile.RoutUserName = userinfo.RoutUserName
+            NavigationSideUserProfile.UserID = userinfo.UserID
+
+            ImageUserBanner.ImageUrl = "~/storage/image/" & userinfo.BannerImage.ImageFileName
+
+            HyperLinkPageHeading.Text = userinfo.UserName & "'s Blogs"
+            HyperLinkPageHeading.NavigateUrl = "~/user/" & userinfo.RoutUserName & "/Blog"
         End If
 
-        MenuUserProfile.UserName = Trim(userinfo.UserName)
-        MenuUserProfile.ImageFileName = userinfo.UserImage.ImageFileName
-        MenuUserProfile.RoutUserName = userinfo.RoutUserName
-
-        LabelProfileUserId.Text = Val(userinfo.UserID)
-
-        LabelPageheading.Text = userinfo.UserName & "' Blog"
-
-        If Session("userid") <> userinfo.UserID And Trim(Session("userid")) <> "" Then
-            'PanelUserHeader.Visible = True
-        End If
-
-        Me.Title = MenuUserProfile.UserName
-        Me.MetaDescription = MenuUserProfile.UserName & "' Blog"
+        Me.Title = NavigationSideUserProfile.UserName & "'s Blogs"
+        Me.MetaDescription = NavigationSideUserProfile.UserName & "'s Blogs"
         Me.MetaKeywords = ""
-
-    End Sub
-
-
-
-    Protected Sub ListViewBlog_ItemDataBound(sender As Object, e As ListViewItemEventArgs)
-
     End Sub
 </script>
 
 <asp:Content ID="Content1" ContentPlaceHolderID="head" runat="Server">
 </asp:Content>
 <asp:Content ID="Content2" ContentPlaceHolderID="ContentPlaceHolder1" runat="Server">
-    <div class="container">
-        <div class="row">
-            <div class="col-lg-9">
-                <div class="row">
-                    <div class="col-lg-3 col-md-3 col-sm-3">
-                        <uc1:MenuUserProfile runat="server" ID="MenuUserProfile" />
-                    </div>
-                    <div class="col-lg-9 col-md-9 col-sm-9">
-                        <asp:UpdatePanel ID="UpdatePanelMessage" runat="server" UpdateMode="Conditional">
-                            <ContentTemplate>
-                                <div class="panel panel-default">
-                                    <div class="panel-heading">
-                                        <asp:Label ID="LabelPageheading" runat="server" Text=""></asp:Label>
-                                        <asp:Label ID="LabelProfileUserId" runat="server" Text="0" Visible="False"></asp:Label>
-                                    </div>
-                                    <div class="panel-body ">
-                                        <asp:ListView ID="ListViewBlog" runat="server" DataSourceID="SqlDataSourceMessage" DataKeyNames="Blogid" OnItemDataBound="ListViewBlog_ItemDataBound">
-                                            <EmptyDataTemplate>
-                                                <span>No blog posted.</span>
-                                            </EmptyDataTemplate>
-                                            <ItemTemplate>
-                                                <uc1:BlogInListView runat="server" ID="BlogInListView" UserId='<%# Eval("UserId") %>' UserName='<%# Eval("UserName") %>' RoutUserName='<%# Eval("RoutUserName") %>' BlogId='<%# Eval("BlogId") %>' Heading='<%# Eval("Heading") %>' Highlight='<%# Eval("Highlight") %>' BlogImageId='<%# Eval("ImageId") %>' BlogImageFileName='<%# Eval("PostImageFilename") %>' PostDate='<%# Eval("PostDate") %>' />
-                                            </ItemTemplate>
-                                            <LayoutTemplate>
-                                                <div id="itemPlaceholderContainer" runat="server" class="row">
-                                                    <div runat="server" id="itemPlaceholder" />
-                                                </div>
-                                            </LayoutTemplate>
-
-                                        </asp:ListView>
-                                        <asp:SqlDataSource runat="server" ID="SqlDataSourceMessage" ConnectionString='<%$ ConnectionStrings:AppConnectionString %>'
-                                            SelectCommand="SELECT t.Blogid, t.Heading, t.Highlight, t.Containt, CONVERT(VARCHAR(19), t.postdate, 120) AS postdate, t.userid, t2.username, t2.routusername, t1.ImageFileName as PostImageFilename, t.imageid  
-                                    FROM [Table_Blog] t
-                                    left JOIN table_image t1 ON t.ImageID=t1.ImageID 
-                                    left JOIN table_User t2 on t.userid = t2.userid
-                                    WHERE (t.[UserID] = @UserID) 
-                                    ORDER BY [PostDate] DESC"
-                                            DeleteCommand="DELETE FROM [Table_Blog] WHERE [Blogid] = @Blogid" InsertCommand="INSERT INTO [Table_Blog] ([Blogid], [Heading], [Highlight], [Containt], [ImageId], [UserID], [PostDate], [Status]) VALUES (@Blogid, @Heading, @Highlight, @Containt, @ImageId, @UserID, @PostDate, @Status)" UpdateCommand="UPDATE [Table_Blog] SET [Heading] = @Heading, [Highlight] = @Highlight, [Containt] = @Containt, [ImageId] = @ImageId, [UserID] = @UserID, [PostDate] = @PostDate, [Status] = @Status WHERE [Blogid] = @Blogid">
-                                            <DeleteParameters>
-                                                <asp:Parameter Name="Blogid" Type="Decimal"></asp:Parameter>
-                                            </DeleteParameters>
-                                            <SelectParameters>
-                                                <asp:ControlParameter ControlID="LabelProfileUserId" PropertyName="Text" Name="UserID" Type="Decimal"></asp:ControlParameter>
-                                            </SelectParameters>
-                                            <UpdateParameters>
-                                                <asp:Parameter Name="Heading" Type="String"></asp:Parameter>
-                                                <asp:Parameter Name="Highlight" Type="String"></asp:Parameter>
-                                                <asp:Parameter Name="Containt" Type="String"></asp:Parameter>
-                                                <asp:Parameter Name="ImageId" Type="Decimal"></asp:Parameter>
-                                                <asp:Parameter Name="UserID" Type="Decimal"></asp:Parameter>
-                                                <asp:Parameter Name="PostDate" Type="DateTime"></asp:Parameter>
-                                                <asp:Parameter Name="Status" Type="String"></asp:Parameter>
-                                                <asp:Parameter Name="Blogid" Type="Decimal"></asp:Parameter>
-                                            </UpdateParameters>
-                                        </asp:SqlDataSource>
-                                    </div>
-                                    <div class="panel-footer  clearfix ">
-                                        <div class="pull-right ">
-                                            <asp:DataPager runat="server" ID="DataPagerMessage" PagedControlID="ListViewBlog">
-                                                <Fields>
-                                                    <asp:NumericPagerField PreviousPageText="<<" NextPageText=">>" ButtonCount="5" NumericButtonCssClass="btn btn-xs btn-default" CurrentPageLabelCssClass="btn btn-xs btn-default" NextPreviousButtonCssClass="btn btn-xs btn-default" />
-                                                </Fields>
-                                            </asp:DataPager>
-
-                                        </div>
-                                    </div>
-                                </div>
-                            </ContentTemplate>
-                        </asp:UpdatePanel>
-                    </div>
-                </div>
-            </div>
-            <div class="col-lg-3">
+    <div class="row">
+        <div class="col-sm-12">
+            <div class="card  m-1 BoxEffect8">
+                <asp:Image ID="ImageUserBanner" ImageUrl="~/Content/image/ProfileBanner.png" CssClass="img-fluid" runat="server" />
             </div>
         </div>
     </div>
+
+ 
+            <div class="row">
+                <div class="col-12 col-sm-12 col-md-3 col-lg-3 col-xl-3">
+                    <uc1:NavigationSideUserProfile runat="server" ID="NavigationSideUserProfile" />
+                </div>
+                <div class="col-12 col-sm-12 col-md-9 col-lg-9 col-xl-9">
+
+                    <div class="card mt-2 BoxEffect6 ">
+                        <div class="card-header clearfix ">
+                            <div class="float-right ">
+                                <asp:HyperLink ID="HyperLink1" NavigateUrl="~/Dashboard/Blog/write.aspx" CssClass="btn btn-sm btn-info" role="button" runat="server">Write Blog</asp:HyperLink>
+                            </div>
+                            <h5 class="card-title m-0 ">
+                                <asp:HyperLink ID="HyperLinkPageHeading" runat="server" NavigateUrl="~/blog/" Text="Blog"></asp:HyperLink>
+                            </h5>
+                        </div>
+                    </div>
+                        <div class="card-body">
+                            <asp:ListView ID="ListViewBlog" runat="server" DataSourceID="SqlDataSourceBlog" DataKeyNames="Blogid">
+                                <EmptyDataTemplate>
+                                    <span>You have not posted your first blog yet..</span>
+                                </EmptyDataTemplate>
+                                <ItemTemplate>
+                                    <div class="col-12">
+                                        <uc1:BlogPreviewInList runat="server" ID="BlogPreviewInList" UserId='<%# Eval("UserId") %>' UserName='<%# Eval("UserName") %>' RoutUserName='<%# Eval("RoutUserName") %>' BlogId='<%# Eval("BlogId") %>' Heading='<%# Eval("Heading") %>' Highlight='<%# Eval("Highlight") %>' BlogImageId='<%# Eval("ImageId") %>' BlogImageFileName='<%# Eval("PostImageFilename") %>' PostDate='<%# Eval("PostDate") %>' />
+                                    </div>
+                                </ItemTemplate>
+                                <LayoutTemplate>
+                                    <div runat="server" id="itemPlaceholderContainer" class="row">
+                                        <div runat="server" id="itemPlaceholder" />
+                                    </div>
+                                </LayoutTemplate>
+                            </asp:ListView>
+                            <asp:SqlDataSource runat="server" ID="SqlDataSourceBlog" ConnectionString='<%$ ConnectionStrings:AppConnectionString %>'
+                                SelectCommand="SELECT t.Blogid, t.Heading, t.Highlight, t.Containt, CONVERT(VARCHAR(19), t.postdate, 120) AS postdate, t.userId, t2.username, t2.routusername, t1.ImageFileName as PostImageFilename, t.imageid  
+                        FROM [Table_Blog] t
+                        left JOIN table_image t1 ON t.ImageID=t1.ImageID 
+                        left JOIN table_User t2 on t.userid = t2.userid
+                           WHERE (t.userid = @UserID) 
+                        ORDER BY [PostDate] DESC">
+                                <SelectParameters>
+                                    <asp:ControlParameter ControlID="NavigationSideUserProfile" PropertyName="userid" Name="UserID" Type="String"></asp:ControlParameter>
+                                </SelectParameters>
+                            </asp:SqlDataSource>
+                        </div>
+                        <div class="card-footer clearfix">
+                            <div class="float-right">
+                                <asp:DataPager runat="server" ID="DataPager1" PagedControlID="ListViewBlog" PageSize="4">
+                                    <Fields>
+                                        <asp:NumericPagerField PreviousPageText="<<" NextPageText=">>" ButtonCount="5" NumericButtonCssClass="btn btn-sm btn-default" CurrentPageLabelCssClass="btn btn-sm btn-default" NextPreviousButtonCssClass="btn btn-sm btn-default" />
+                                    </Fields>
+                                </asp:DataPager>
+                            </div>
+                        </div>
+                   
+                </div>
+            </div>
+    
+
 </asp:Content>
 
